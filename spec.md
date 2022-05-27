@@ -14,8 +14,8 @@
 
 ## Numbers
 
-Signed integer: i8, i16, i32, i64
-Unsigned integer: u8, u16, u32, u64 + usize, isize (Architecture specific size)
+Signed integer: i8, i16, i32, i64  
+Unsigned integer: u8, u16, u32, u64 + usize, isize (Architecture specific size)  
 Floating point data types: f32 single precision, f64 double precision
 
 ## String
@@ -57,7 +57,7 @@ Expresion is syntax which yields a value.
 
 General:
 <switch> | <call> | <lambda> | <int> | <float> | <string> | <bool>
-| <arr> | <map> | <binop> | <unop>
+| <arr> | <map> | <binop> | <unop> | <ternary>
 ```
 
 ## Statement (stmt)
