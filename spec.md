@@ -263,7 +263,7 @@ General:
 ## Bool literal (bool)
 
 ```
-Usage
+Usage:
 true
 false
 
@@ -360,13 +360,13 @@ Usage:
 type Z = X<A>
 
 General:
-type <expr> = <expr>
+type identifier[<[identifier[: Type]]...>] = <expr>
 ```
 
 ## For loop (for)
 
 ```
-Usage
+Usage:
 for start; stop; step {
   doStuff()
 }
@@ -380,10 +380,10 @@ for <expr>; <expr>; <expr> <expr>
 | for <expr> in <expr> <expr>
 ```
 
-## While
+## While (while)
 
 ```
-Usage
+Usage:
 while condition {
   doStuff()
 }
@@ -392,11 +392,10 @@ General:
 while <expr> <expr>
 ```
 
-## If
+## If (if)
 
 ```
-Usage
-
+Usage:
 if condition {
   doStuff()
 }
