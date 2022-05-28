@@ -19,6 +19,10 @@ void Lexer::lex() {
   tokens.push_back(Token(OtherKind::Eof, "", line, current, nullptr));
 }
 
+bool is_identifier_start(char c) { return isalpha(c) || c == '_'; }
+
+bool is_identifier_part(char c) { return is_identifier_start(c) || isdigit(c); }
+
 void Lexer::tokenize() {
   TokenKind kind = OtherKind::Bad;
   std::any literal = nullptr;
@@ -35,7 +39,7 @@ void Lexer::tokenize() {
     return;
   }
 
-  if (isalpha(c) || c == '_') {
+  if (is_identifier_start(c)) {
     tokens.push_back(identifier());
     return;
   } else if (isdigit(c)) {
@@ -143,12 +147,13 @@ Token Lexer::string() {
 }
 
 Token Lexer::identifier() {
-  while (isalnum(peek()))
-    advance();
-  std::string text = source.substr(start, current - start);
+  std::string lexme;
+  while (is_identifier_part(peek())) {
+    lexme += advance();
+  }
   TokenKind kind =
-      keywords.count(text) ? keywords.at(text) : LiteralKind::Identifier;
-  return Token(kind, source.substr(start, current - start), position, line);
+      keywords.contains(lexme) ? keywords.at(lexme) : LiteralKind::Identifier;
+  return Token(kind, lexme, position, line, lexme);
 }
 
 std::optional<Token> Lexer::otherToken() {
