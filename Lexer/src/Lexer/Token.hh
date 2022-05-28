@@ -5,37 +5,57 @@
 
 namespace ktpp::lexer {
 enum class OperatorKind {
-  Plus,
-  Minus,
-  Star,
-  Slash,
+
+  // Arithmetic
   Power,
-  Mod,
-  LogicOr,
-  Or,
-  LogicAnd,
-  And,
-  Equals,
   Increment,
   Decrement,
+
+  Star,
+  Slash,
+  Mod,
+
+  Minus,
+  Plus,
+
+  // Bitshift
+  Rsh,
+  Lsh,
+
+  // Relational
+  Greater,
+  GreaterEq,
+  Less,
+  LessEq,
+  EqEq,
+  NotEq,
+
+  // Bitwise
+  And,
+  Xor,
+  Or,
+
+  // || &&
+  LogicOr,
+  LogicAnd,
+
+  // Assignment
+  Equals,
   PlusEq,
   MinusEq,
   StarEq,
   SlashEq,
   PowerEq,
   ModEq,
+  XorEq,
   OrEq,
   AndEq,
-  EqEq,
-  NotEq,
-  Greater,
-  GreaterEq,
-  Less,
-  LessEq,
+  LshEq,
+  RshEq,
+
+  // Strict Unary
+  Inv,
   Bang,
-  Colon,
-  Question_Mark,
-  Arrow
 };
 enum class KeywordKind {
   While,
@@ -54,10 +74,17 @@ enum class KeywordKind {
   Async,
   Await,
   Return,
+  Break,
+  Continue,
   Interface,
 };
 enum class LiteralKind { Int, Float, Bool, String, Identifier };
 enum class OtherKind {
+  Dot,
+  Colon,
+  Semicolon,
+  Question_Mark,
+  Arrow,
   Comma,
   L_Paren,
   R_Paren,
@@ -71,7 +98,7 @@ enum class OtherKind {
 using TokenKind =
     std::variant<OperatorKind, KeywordKind, LiteralKind, OtherKind>;
 class Token {
- public:
+public:
   TokenKind kind;
   std::string lexeme;
   size_t position, line;
@@ -79,18 +106,12 @@ class Token {
 
   Token(TokenKind kind, std::string lexeme, size_t position,
         size_t line) noexcept
-      : kind{kind},
-        lexeme(lexeme),
-        position(position),
-        line(line),
+      : kind{kind}, lexeme(lexeme), position(position), line(line),
         literal(nullptr) {}
 
   Token(TokenKind kind, std::string lexeme, size_t position, size_t line,
         std::any literal) noexcept
-      : kind{kind},
-        lexeme(lexeme),
-        position(position),
-        line(line),
+      : kind{kind}, lexeme(lexeme), position(position), line(line),
         literal(literal) {}
 };
-}  // namespace ktpp::lexer
+} // namespace ktpp::lexer

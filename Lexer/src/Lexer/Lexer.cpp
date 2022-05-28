@@ -179,13 +179,27 @@ std::optional<Token> Lexer::otherToken() {
   std::string lexme;
 
   if (others.contains(lexme + c)) {
+    lexme += c;
     advance();
-    return Token(others.at(lexme + c), lexme + c, position, line, literal);
+    kind = others.at(lexme);
+    return Token(kind, lexme, position, line, literal);
+  }
+
+  if (c == '-' && peek(1) == '>') {
+    lexme += c;
+    advance();
+    lexme += advance();
+    kind = others.at(lexme);
+    return Token(kind, lexme, position, line, literal);
   }
 
   if (c == '\"') {
     advance();
     return string();
+  }
+  if (operators.contains(lexme)) {
+    kind = operators.at(lexme);
+    return Token(kind, lexme, position, line, literal);
   }
   while (operators.contains(lexme + c)) {
     lexme += peek();

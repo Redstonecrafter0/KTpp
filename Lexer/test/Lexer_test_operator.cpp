@@ -20,7 +20,6 @@ void test() {
   test_operator("&&", OperatorKind::LogicAnd);
   test_operator("||", OperatorKind::LogicOr);
   test_operator("!", OperatorKind::Bang);
-  test_operator("->", OperatorKind::Arrow);
   test_operator("++", OperatorKind::Increment);
   test_operator("--", OperatorKind::Decrement);
   test_operator("+=", OperatorKind::PlusEq);
@@ -32,10 +31,15 @@ void test() {
   test_operator("|=", OperatorKind::OrEq);
   test_operator("**", OperatorKind::Power);
   test_operator("**=", OperatorKind::PowerEq);
-  test_operator(":", OperatorKind::Colon);
-  test_operator("?", OperatorKind::Question_Mark);
   test_operator("|", OperatorKind::Or);
   test_operator("&", OperatorKind::And);
+  test_operator("^", OperatorKind::Xor);
+  test_operator("^=", OperatorKind::XorEq);
+  test_operator("<<", OperatorKind::Lsh);
+  test_operator("<<=", OperatorKind::LshEq);
+  test_operator(">>", OperatorKind::Rsh);
+  test_operator(">>=", OperatorKind::RshEq);
+  test_operator("~", OperatorKind::Inv);
 }
 
 TEST(test();)

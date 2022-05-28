@@ -38,7 +38,10 @@ private:
       {"async", KeywordKind::Async},
       {"await", KeywordKind::Await},
       {"return", KeywordKind::Return},
-      {"interface", KeywordKind::Interface}};
+      {"interface", KeywordKind::Interface},
+      {"break", KeywordKind::Break},
+      {"continue", KeywordKind::Continue},
+  };
 
   std::map<std::string, OperatorKind> operators{
       {"+", OperatorKind::Plus},       {"-", OperatorKind::Minus},
@@ -48,21 +51,26 @@ private:
       {"<", OperatorKind::Less},       {"<=", OperatorKind::LessEq},
       {">", OperatorKind::Greater},    {">=", OperatorKind::GreaterEq},
       {"&&", OperatorKind::LogicAnd},  {"||", OperatorKind::LogicOr},
-      {"!", OperatorKind::Bang},       {"->", OperatorKind::Arrow},
       {"++", OperatorKind::Increment}, {"--", OperatorKind::Decrement},
       {"+=", OperatorKind::PlusEq},    {"-=", OperatorKind::MinusEq},
       {"*=", OperatorKind::StarEq},    {"/=", OperatorKind::SlashEq},
       {"%=", OperatorKind::ModEq},     {"&=", OperatorKind::AndEq},
-      {"|=", OperatorKind::OrEq},      {"^=", OperatorKind::PowerEq},
-      {"**", OperatorKind::Power},     {"**=", OperatorKind::PowerEq},
-      {":", OperatorKind::Colon},      {"?", OperatorKind::Question_Mark},
-      {"|", OperatorKind::Or},         {"&", OperatorKind::And}};
+      {"|=", OperatorKind::OrEq},      {"**", OperatorKind::Power},
+      {"**=", OperatorKind::PowerEq},  {"|", OperatorKind::Or},
+      {"&", OperatorKind::And},        {"^=", OperatorKind::XorEq},
+      {"^", OperatorKind::Xor},        {"<<", OperatorKind::Lsh},
+      {">>", OperatorKind::Rsh},       {"<<=", OperatorKind::LshEq},
+      {">>=", OperatorKind::RshEq},    {"!", OperatorKind::Bang},
+      {"~", OperatorKind::Inv}};
 
   std::map<std::string, OtherKind> others{
-      {"(", OtherKind::L_Paren},   {")", OtherKind::R_Paren},
-      {"{", OtherKind::L_Brace},   {"}", OtherKind::R_Brace},
-      {"[", OtherKind::L_Bracket}, {"]", OtherKind::R_Bracket},
-      {",", OtherKind::Comma}};
+      {"->", OtherKind::Arrow},    {"?", OtherKind::Question_Mark},
+      {":", OtherKind::Colon},     {"(", OtherKind::L_Paren},
+      {")", OtherKind::R_Paren},   {"{", OtherKind::L_Brace},
+      {"}", OtherKind::R_Brace},   {"[", OtherKind::L_Bracket},
+      {"]", OtherKind::R_Bracket}, {",", OtherKind::Comma},
+      {".", OtherKind::Dot},       {";", OtherKind::Semicolon},
+  };
 
   Token number();
   Token string();
