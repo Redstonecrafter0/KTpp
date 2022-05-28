@@ -49,6 +49,26 @@ void test_fndef() {
   }
 }
 
+void test_oop() {
+  auto tokens = eachToken("class Foo {  } interface Bar {  }");
+  auto expected = std::vector<Token>({
+      Token(KeywordKind::Class, "class", 0, 0),
+      Token(LiteralKind::Identifier, "Foo", 0, 0),
+      Token(OtherKind::L_Brace, "{", 0, 0),
+      Token(OtherKind::R_Brace, "}", 0, 0),
+      Token(KeywordKind::Interface, "interface", 0, 0),
+      Token(LiteralKind::Identifier, "Bar", 0, 0),
+      Token(OtherKind::L_Brace, "{", 0, 0),
+      Token(OtherKind::R_Brace, "}", 0, 0),
+      Token(OtherKind::Eof, "", 0, 0),
+  });
+
+  for (auto i = 0; i < expected.size(); i++) {
+    ASSERT(tokens[i].kind == expected[i].kind);
+    ASSERT_EQ(tokens[i].lexeme, expected[i].lexeme);
+  }
+}
+
 void test() {
   test_decl();
   test_fndef();

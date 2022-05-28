@@ -54,6 +54,7 @@ enum class KeywordKind {
   Async,
   Await,
   Return,
+  Interface,
 };
 enum class LiteralKind { Int, Float, Bool, String, Identifier };
 enum class OtherKind {

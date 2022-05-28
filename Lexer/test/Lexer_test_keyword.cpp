@@ -20,6 +20,8 @@ void test() {
   test_keyword("switch", KeywordKind::Switch);
   test_keyword("async", KeywordKind::Async);
   test_keyword("await", KeywordKind::Await);
+  test_keyword("return", KeywordKind::Return);
+  test_keyword("interface", KeywordKind::Interface);
 };
 
 TEST(test();)

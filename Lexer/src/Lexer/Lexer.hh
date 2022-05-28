@@ -18,14 +18,23 @@ private:
   std::string source;
   size_t line = 1, position = 0, current = 0, start = 0;
   std::map<std::string, TokenKind> keywords{
-      {"var", KeywordKind::Var},       {"mut", KeywordKind::Mut},
-      {"for", KeywordKind::For},       {"while", KeywordKind::While},
-      {"do", KeywordKind::Do},         {"if", KeywordKind::If},
-      {"else", KeywordKind::Else},     {"fn", KeywordKind::Fn},
-      {"class", KeywordKind::Class},   {"true", KeywordKind::True},
-      {"false", KeywordKind::False},   {"type", KeywordKind::Type},
-      {"switch", KeywordKind::Switch}, {"async", KeywordKind::Async},
-      {"await", KeywordKind::Await},   {"return", KeywordKind::Return}};
+      {"var", KeywordKind::Var},
+      {"mut", KeywordKind::Mut},
+      {"for", KeywordKind::For},
+      {"while", KeywordKind::While},
+      {"do", KeywordKind::Do},
+      {"if", KeywordKind::If},
+      {"else", KeywordKind::Else},
+      {"fn", KeywordKind::Fn},
+      {"class", KeywordKind::Class},
+      {"true", KeywordKind::True},
+      {"false", KeywordKind::False},
+      {"type", KeywordKind::Type},
+      {"switch", KeywordKind::Switch},
+      {"async", KeywordKind::Async},
+      {"await", KeywordKind::Await},
+      {"return", KeywordKind::Return},
+      {"interface", KeywordKind::Interface}};
 
   std::map<std::string, OperatorKind> operators{
       {"+", OperatorKind::Plus},       {"-", OperatorKind::Minus},
