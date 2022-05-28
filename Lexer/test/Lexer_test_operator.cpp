@@ -30,7 +30,6 @@ void test() {
   test_operator("%=", OperatorKind::ModEq);
   test_operator("&=", OperatorKind::AndEq);
   test_operator("|=", OperatorKind::OrEq);
-  test_operator("^=", OperatorKind::PowerEq);
   test_operator("**", OperatorKind::Power);
   test_operator("**=", OperatorKind::PowerEq);
   test_operator(":", OperatorKind::Colon);
