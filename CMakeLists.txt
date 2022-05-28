@@ -8,6 +8,7 @@ include(CTest)
 enable_testing()
 add_subdirectory(Lexer)
 add_subdirectory(Logger)
+add_subdirectory(Parser)
 
 add_executable(ktpp main.cpp)
 
