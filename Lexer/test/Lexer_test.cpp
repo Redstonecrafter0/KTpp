@@ -16,26 +16,26 @@
   }
 using namespace ktpp::lexer;
 
-std::any test_token(std::string str) {
+template <typename TestKind>
+std::any test_token(std::string str, TestKind tkind) {
   auto lexer = Lexer(str);
   lexer.tokenize();
   ASSERT(!lexer.hadError)
   auto tokens = lexer.tokens;
   ASSERT(tokens.size() == 1)
   auto kind = tokens[0].kind;
-  ASSERT(std::holds_alternative<LiteralKind>(kind))
-  ASSERT(std::get<LiteralKind>(kind) == LiteralKind::Int)
-  std::cout << tokens[0].literal.type().name() << std::endl;
+  ASSERT(std::holds_alternative<TestKind>(kind))
+  ASSERT(std::get<TestKind>(kind) == tkind)
   return tokens[0].literal;
 }
 
 void test_int(std::string str, int64_t real) {
-  auto value = test_token(str);
+  auto value = test_token(str, LiteralKind::Int);
   ASSERT_EQ(std::any_cast<int64_t>(value), real)
 }
 
 void test_float(std::string str, double_t real) {
-  auto value = test_token(str);
+  auto value = test_token(str, LiteralKind::Float);
   ASSERT_EQ(std::any_cast<double_t>(value), real)
 }
 

@@ -46,7 +46,7 @@ void Lexer::tokenize() {
 }
 
 Token Lexer::number() {
-  int64_t int_val;
+  int64_t int_val = 0;
   std::string lexme;
   double_t float_val, fraction_size;
   fraction_size = 1;
@@ -57,20 +57,22 @@ Token Lexer::number() {
   for (;;) {
     int n = 0;
     char current = peek();
-    if (current == '\0') break;
+    if (current == '\0')
+      break;
+    lexme += current;
+    advance();
     if (current >= '0' && current <= '9')
       n = current - '0';
-    else if (current == '_')
+    else if (current == '_') {
       continue;
-    else if (current == '.') {
-      if (is_float) throw "Invalid float literal";
+    } else if (current == '.') {
+      if (is_float)
+        throw "Invalid float literal";
       is_float = true;
       float_val = (double_t)int_val;
       continue;
     } else if (current == 'e') {
       is_power = true;
-      lexme += 'e';
-      advance();
       break;
     } else
       throw "Invalid number literal";
@@ -81,28 +83,41 @@ Token Lexer::number() {
       int_val *= 10;
       int_val += n;
     }
-    lexme += current;
-    advance();
   }
 
+  bool neg_power = false;
   if (is_power) {
-    int64_t power;
+    int64_t power = 0;
     for (;;) {
       char current = peek();
-      if (!isdigit(current)) break;
+      if (current == '\0')
+        break;
+      if (!isdigit(current) && current != '-' && current != '_')
+        break;
       lexme += current;
       advance();
+      if (current == '_')
+        continue;
+      if (current == '-') {
+        if (neg_power)
+          throw "Invalid number literal with multiple negatives";
+        neg_power = true;
+        continue;
+      }
       power *= 10;
       power += current - '0';
     }
 
+    if (neg_power)
+      power = -power;
     if (power > 0) {
-      if (!is_float) int_val = std::pow(int_val, power);
+      if (!is_float)
+        int_val = int_val * std::pow(10, power);
     } else if (!is_float) {
       float_val = (double_t)int_val;
-      is_float ^= 1;
+      is_float = true;
     }
-    float_val = std::pow(float_val, (double_t)power);
+    float_val = float_val * std::pow(10, (double_t)power);
   }
 
   if (is_float)
@@ -113,11 +128,13 @@ Token Lexer::number() {
 
 Token Lexer::string() {
   while ((peek() != '"' || peek() != '\'') && !isAtEnd()) {
-    if (peek() == '\n') line++;
+    if (peek() == '\n')
+      line++;
     advance();
   }
 
-  if (isAtEnd()) throw "Unterminated string.";
+  if (isAtEnd())
+    throw "Unterminated string.";
   advance();
 
   std::string value = source.substr(start + 1, current - start - 1);
@@ -126,7 +143,8 @@ Token Lexer::string() {
 }
 
 Token Lexer::identifier() {
-  while (isalnum(peek())) advance();
+  while (isalnum(peek()))
+    advance();
   std::string text = source.substr(start, current - start);
   TokenKind kind =
       keywords.count(text) ? keywords.at(text) : LiteralKind::Identifier;
@@ -140,30 +158,30 @@ std::optional<Token> Lexer::otherToken() {
   std::string lexme = std::to_string(c);
 
   switch (c) {
-    case '(':
-      kind = OtherKind::L_Paren;
-      break;
-    case ')':
-      kind = OtherKind::R_Paren;
-      break;
-    case '[':
-      kind = OtherKind::L_Bracket;
-      break;
-    case ']':
-      kind = OtherKind::R_Bracket;
-      break;
-    case '{':
-      kind = OtherKind::L_Brace;
-      break;
-    case '}':
-      kind = OtherKind::R_Brace;
-      break;
-    case ':':
-      kind = OperatorKind::Colon;
-      break;
-    case '?':
-      kind = OperatorKind::Question_Mark;
-      break;
+  case '(':
+    kind = OtherKind::L_Paren;
+    break;
+  case ')':
+    kind = OtherKind::R_Paren;
+    break;
+  case '[':
+    kind = OtherKind::L_Bracket;
+    break;
+  case ']':
+    kind = OtherKind::R_Bracket;
+    break;
+  case '{':
+    kind = OtherKind::L_Brace;
+    break;
+  case '}':
+    kind = OtherKind::R_Brace;
+    break;
+  case ':':
+    kind = OperatorKind::Colon;
+    break;
+  case '?':
+    kind = OperatorKind::Question_Mark;
+    break;
   }
 
   if (std::holds_alternative<OtherKind>(kind) &&
@@ -173,53 +191,56 @@ std::optional<Token> Lexer::otherToken() {
   }
 
   switch (c) {
-    case '+':
-      kind = match('+')
-                 ? OperatorKind::Increment
-                 : (match('=') ? OperatorKind::PlusEq : OperatorKind::Plus);
-      break;
-    case '-':
-      kind = match('-') ? OperatorKind::Decrement
-                        : (match('>') ? OperatorKind::Arrow
-                                      : (match('=') ? OperatorKind::MinusEq
-                                                    : OperatorKind::Minus));
-      break;
-    case '*':
-      kind = match('*')
-                 ? OperatorKind::Power
-                 : (match('=') ? OperatorKind::StarEq : OperatorKind::Star);
-      break;
-    case '/':
-      if (match('/'))
-        while (peek() != '\n') advance();
-      kind = match('=') ? OperatorKind::SlashEq : OperatorKind::Slash;
-      break;
-    case '%':
-      kind = match('=') ? OperatorKind::ModEq : OperatorKind::Mod;
-      break;
-    case '|':
-      if (match('|')) kind = OperatorKind::Or;
-      break;
-    case '&':
-      if (match('&')) kind = OperatorKind::And;
-      break;
-    case '>':
-      kind = match('=') ? OperatorKind::GreaterEq : OperatorKind::Greater;
-      break;
-    case '<':
-      kind = match('=') ? OperatorKind::LessEq : OperatorKind::Less;
-      break;
-    case '=':
-      kind = match('=') ? OperatorKind::EqEq : OperatorKind::Equals;
-      break;
-    case '!':
-      kind = match('=') ? OperatorKind::NotEq : OperatorKind::Bang;
-      break;
-    case '"':
-      advance();
-      return string();
-    default:
-      return std::nullopt;
+  case '+':
+    kind = match('+')
+               ? OperatorKind::Increment
+               : (match('=') ? OperatorKind::PlusEq : OperatorKind::Plus);
+    break;
+  case '-':
+    kind = match('-') ? OperatorKind::Decrement
+                      : (match('>') ? OperatorKind::Arrow
+                                    : (match('=') ? OperatorKind::MinusEq
+                                                  : OperatorKind::Minus));
+    break;
+  case '*':
+    kind = match('*')
+               ? OperatorKind::Power
+               : (match('=') ? OperatorKind::StarEq : OperatorKind::Star);
+    break;
+  case '/':
+    if (match('/'))
+      while (peek() != '\n')
+        advance();
+    kind = match('=') ? OperatorKind::SlashEq : OperatorKind::Slash;
+    break;
+  case '%':
+    kind = match('=') ? OperatorKind::ModEq : OperatorKind::Mod;
+    break;
+  case '|':
+    if (match('|'))
+      kind = OperatorKind::Or;
+    break;
+  case '&':
+    if (match('&'))
+      kind = OperatorKind::And;
+    break;
+  case '>':
+    kind = match('=') ? OperatorKind::GreaterEq : OperatorKind::Greater;
+    break;
+  case '<':
+    kind = match('=') ? OperatorKind::LessEq : OperatorKind::Less;
+    break;
+  case '=':
+    kind = match('=') ? OperatorKind::EqEq : OperatorKind::Equals;
+    break;
+  case '!':
+    kind = match('=') ? OperatorKind::NotEq : OperatorKind::Bang;
+    break;
+  case '"':
+    advance();
+    return string();
+  default:
+    return std::nullopt;
   }
   advance();
   advance();
@@ -242,4 +263,4 @@ bool Lexer::match(char expected, size_t offset) {
 }
 
 bool Lexer::isAtEnd() { return current >= source.length(); }
-}  // namespace ktpp::lexer
+} // namespace ktpp::lexer
