@@ -131,9 +131,11 @@ Token Lexer::number() {
 }
 
 Token Lexer::string() {
-  while ((peek() != '"' || peek() != '\'') && !isAtEnd()) {
+  std::string lexme;
+  while ((peek() != '"') && !isAtEnd()) {
     if (peek() == '\n')
       line++;
+    lexme += peek();
     advance();
   }
 
@@ -141,9 +143,8 @@ Token Lexer::string() {
     throw "Unterminated string.";
   advance();
 
-  std::string value = source.substr(start + 1, current - start - 1);
-  return Token(LiteralKind::String, source.substr(start, current - start),
-               position, line, value);
+  std::string value = lexme;
+  return Token(LiteralKind::String, "\"" + value + "\"", position, line, value);
 }
 
 Token Lexer::identifier() {

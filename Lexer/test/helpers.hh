@@ -13,6 +13,17 @@
               << __LINE__ << std::endl;                                        \
     exit(1);                                                                   \
   }
+
+#define TEST(body)                                                             \
+  int main() {                                                                 \
+    try {                                                                      \
+      body                                                                     \
+    } catch (std::exception e) {                                               \
+      std::cout << e.what() << std::endl;                                      \
+      return 1;                                                                \
+    }                                                                          \
+  }
+
 using namespace ktpp::lexer;
 
 template <typename TestKind>
