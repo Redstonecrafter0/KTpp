@@ -1,5 +1,6 @@
 #include "Lexer.hh"
 
+#include <functional>
 #include <iostream>
 
 namespace ktpp::lexer {
@@ -161,97 +162,24 @@ std::optional<Token> Lexer::otherToken() {
   char c = peek();
   TokenKind kind = OtherKind::Bad;
   std::any literal = nullptr;
-  std::string lexme = std::to_string(c);
+  std::string lexme;
 
-  switch (c) {
-  case '(':
-    kind = OtherKind::L_Paren;
-    break;
-  case ')':
-    kind = OtherKind::R_Paren;
-    break;
-  case '[':
-    kind = OtherKind::L_Bracket;
-    break;
-  case ']':
-    kind = OtherKind::R_Bracket;
-    break;
-  case '{':
-    kind = OtherKind::L_Brace;
-    break;
-  case '}':
-    kind = OtherKind::R_Brace;
-    break;
-  case ':':
-    kind = OperatorKind::Colon;
-    break;
-  case '?':
-    kind = OperatorKind::Question_Mark;
-    break;
-  }
-
-  if (std::holds_alternative<OtherKind>(kind) &&
-      std::get<OtherKind>(kind) != OtherKind::Bad) {
-    advance();
-    return Token(kind, lexme, position, line, literal);
-  }
-
-  switch (c) {
-  case '+':
-    kind = match('+')
-               ? OperatorKind::Increment
-               : (match('=') ? OperatorKind::PlusEq : OperatorKind::Plus);
-    break;
-  case '-':
-    kind = match('-') ? OperatorKind::Decrement
-                      : (match('>') ? OperatorKind::Arrow
-                                    : (match('=') ? OperatorKind::MinusEq
-                                                  : OperatorKind::Minus));
-    break;
-  case '*':
-    kind = match('*')
-               ? OperatorKind::Power
-               : (match('=') ? OperatorKind::StarEq : OperatorKind::Star);
-    break;
-  case '/':
-    if (match('/'))
-      while (peek() != '\n')
-        advance();
-    kind = match('=') ? OperatorKind::SlashEq : OperatorKind::Slash;
-    break;
-  case '%':
-    kind = match('=') ? OperatorKind::ModEq : OperatorKind::Mod;
-    break;
-  case '|':
-    if (match('|'))
-      kind = OperatorKind::Or;
-    break;
-  case '&':
-    if (match('&'))
-      kind = OperatorKind::And;
-    break;
-  case '>':
-    kind = match('=') ? OperatorKind::GreaterEq : OperatorKind::Greater;
-    break;
-  case '<':
-    kind = match('=') ? OperatorKind::LessEq : OperatorKind::Less;
-    break;
-  case '=':
-    kind = match('=') ? OperatorKind::EqEq : OperatorKind::Equals;
-    break;
-  case '!':
-    kind = match('=') ? OperatorKind::NotEq : OperatorKind::Bang;
-    break;
-  case '"':
+  if (c == '\"') {
     advance();
     return string();
-  default:
-    return std::nullopt;
   }
-  advance();
-  advance();
-  return Token(kind, source.substr(start, current - start), position, line,
-               literal);
+  while (operators.contains(lexme + c)) {
+    lexme += peek();
+    advance();
+    c = peek();
+    if (c == '\0')
+      break;
+  }
+  if (operators.contains(lexme)) {
+    kind = operators.at(lexme);
+    return Token(kind, lexme, position, line, literal);
+  }
+  return std::nullopt;
 }
 
 char Lexer::peek(size_t offset) {
@@ -264,8 +192,16 @@ char Lexer::advance() {
   return source.at(current - 1);
 }
 
+bool Lexer::advance(bool condition) {
+  if (condition) {
+    advance();
+  }
+  return condition;
+}
+
 bool Lexer::match(char expected, size_t offset) {
-  return !(isAtEnd() || (source.at(current) != expected));
+  return !(isAtEnd() || current + offset >= source.length() ||
+           (source.at(current) != expected));
 }
 
 bool Lexer::isAtEnd() { return current >= source.length(); }
