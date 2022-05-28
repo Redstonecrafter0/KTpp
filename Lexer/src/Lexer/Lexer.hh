@@ -1,4 +1,5 @@
 #pragma once
+#include "Logger/Logger.hh"
 #include <map>
 #include <optional>
 #include <vector>
@@ -10,12 +11,15 @@ class Lexer {
 public:
   bool hadError = false;
   std::vector<Token> tokens;
-  Lexer(std::string source);
+  Lexer(logger::Logger *logger, std::string filePath, std::string source);
   void lex();
   void tokenize();
 
 private:
+  logger::Logger *logger;
+  std::string filePath;
   std::string source;
+
   size_t line = 1, position = 0, current = 0, start = 0;
   std::map<std::string, TokenKind> keywords{
       {"var", KeywordKind::Var},
@@ -70,5 +74,6 @@ private:
   bool advance(bool);
   bool match(char expected, size_t offset = 0);
   bool isAtEnd();
+  void emit(logger::LogLevel, std::string);
 };
 } // namespace ktpp::lexer

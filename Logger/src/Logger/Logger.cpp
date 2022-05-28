@@ -47,6 +47,24 @@ public:
     }
   }
 
+  void Log(LogLevel level, const std::string &source,
+           const std::string &message) override {
+    if (level < min_level)
+      return;
+    try {
+      if (colors) {
+        *ostream << log_level_color(level);
+      }
+      *ostream << "[" << level << "] " << source << ": " << message;
+      if (colors) {
+        *ostream << log_level_reset();
+      }
+      *ostream << std::endl;
+    } catch (std::exception e) {
+      std::cerr << "Error while logging: " << e.what() << std::endl;
+    }
+  }
+
   ~LogWriter() override { ostream->flush(); }
 };
 
@@ -62,10 +80,35 @@ public:
     }
   }
 
+  void Log(LogLevel level, const std::string &source,
+           const std::string &message) override {
+    for (auto &logger : loggers) {
+      logger->Log(level, source, message);
+    }
+  }
+
   ~CombinedLogger() override {
     for (auto &logger : loggers) {
       delete logger;
     }
+  }
+};
+
+class PrefixedLogger : public Logger {
+private:
+  std::unique_ptr<Logger> logger;
+  std::string prefix;
+
+public:
+  PrefixedLogger(std::unique_ptr<Logger> logger, std::string prefix)
+      : logger(std::move(logger)), prefix(prefix) {}
+  void Log(LogLevel level, const std::string &message) override {
+    logger->Log(level, prefix, message);
+  }
+
+  void Log(LogLevel level, const std::string &source,
+           const std::string &message) override {
+    logger->Log(level, prefix + "." + source, message);
   }
 };
 
@@ -91,5 +134,10 @@ std::unique_ptr<Logger> create_logger(std::ostream *ostream, LogLevel min_level,
 
 std::unique_ptr<Logger> combine_loggers(std::vector<Logger *> loggers) {
   return std::make_unique<CombinedLogger>(loggers);
+}
+
+std::unique_ptr<Logger> sourced_logger(std::unique_ptr<Logger> logger,
+                                       const std::string &prefix) {
+  return std::make_unique<PrefixedLogger>(std::move(logger), prefix);
 }
 } // namespace ktpp::logger

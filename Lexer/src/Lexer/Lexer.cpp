@@ -4,14 +4,15 @@
 #include <iostream>
 
 namespace ktpp::lexer {
-Lexer::Lexer(std::string source) : source(source) {}
+Lexer::Lexer(logger::Logger *logger, std::string filePath, std::string source)
+    : logger(logger), filePath(filePath), source(source) {}
 void Lexer::lex() {
   while (!isAtEnd()) {
     start = current;
     try {
       tokenize();
-    } catch (std::string e) {
-      std::cout << "\033[1m\033[31m" << e << "\033[0m" << std::endl;
+    } catch (std::exception e) {
+      emit(logger::LogLevel::Error, e.what());
       hadError = true;
       break;
     }
@@ -19,6 +20,8 @@ void Lexer::lex() {
 
   tokens.push_back(Token(OtherKind::Eof, "", line, current, nullptr));
 }
+
+void error(std::string e) { throw std::runtime_error(e); }
 
 bool is_identifier_start(char c) { return isalpha(c) || c == '_'; }
 
@@ -51,7 +54,7 @@ void Lexer::tokenize() {
     tokens.push_back(number());
     return;
   }
-  throw "Unexpected character '" + std::to_string(c) + "'.";
+  error("Unexpected character '" + std::to_string(c) + "'.");
 }
 
 Token Lexer::number() {
@@ -76,7 +79,7 @@ Token Lexer::number() {
       continue;
     } else if (current == '.') {
       if (is_float)
-        throw "Invalid float literal";
+        error("Invalid float literal");
       is_float = true;
       float_val = (double_t)int_val;
       continue;
@@ -84,7 +87,7 @@ Token Lexer::number() {
       is_power = true;
       break;
     } else
-      throw "Invalid number literal";
+      error("Invalid number literal");
     if (is_float) {
       fraction_size /= 10;
       float_val += ((double_t)n) * (fraction_size);
@@ -109,7 +112,7 @@ Token Lexer::number() {
         continue;
       if (current == '-') {
         if (neg_power)
-          throw "Invalid number literal with multiple negatives";
+          error("Invalid number literal with multiple negatives");
         neg_power = true;
         continue;
       }
@@ -126,6 +129,9 @@ Token Lexer::number() {
       float_val = (double_t)int_val;
       is_float = true;
     }
+    if (power == 0)
+      emit(logger::LogLevel::Warn, "Number literal with power of 0");
+
     float_val = float_val * std::pow(10, (double_t)power);
   }
 
@@ -137,6 +143,7 @@ Token Lexer::number() {
 
 Token Lexer::string() {
   std::string lexme;
+  int start_line = line;
   while ((peek() != '"') && !isAtEnd()) {
     if (peek() == '\n')
       line++;
@@ -144,8 +151,11 @@ Token Lexer::string() {
     advance();
   }
 
-  if (isAtEnd())
-    throw "Unterminated string.";
+  if (isAtEnd()) {
+    emit(logger::LogLevel::Error, "Unterminated string in " + filePath + ":" +
+                                      std::to_string(start_line));
+    error("Unterminated string");
+  }
   advance();
 
   std::string value = lexme;
@@ -214,4 +224,9 @@ bool Lexer::match(char expected, size_t offset) {
 }
 
 bool Lexer::isAtEnd() { return current >= source.length(); }
+
+void Lexer::emit(logger::LogLevel level, std::string message) {
+  logger->Log(level, "Lexer",
+              message + " " + filePath + ":" + std::to_string(line));
+}
 } // namespace ktpp::lexer

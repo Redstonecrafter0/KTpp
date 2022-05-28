@@ -28,7 +28,9 @@ using namespace ktpp::lexer;
 
 template <typename TestKind>
 std::any test_token(std::string str, TestKind tkind) {
-  auto lexer = Lexer(str);
+  auto logger =
+      ktpp::logger::create_logger(&std::cout, ktpp::logger::LogLevel::Info);
+  auto lexer = Lexer(logger.get(), "mockfile", str);
   lexer.lex();
   ASSERT(!lexer.hadError)
   auto tokens = lexer.tokens;
@@ -40,7 +42,9 @@ std::any test_token(std::string str, TestKind tkind) {
 }
 
 auto eachToken(std::string code) {
-  auto lexer = Lexer(code);
+  auto logger =
+      ktpp::logger::create_logger(&std::cout, ktpp::logger::LogLevel::Info);
+  auto lexer = Lexer(logger.get(), "mockfile", code);
   lexer.lex();
   ASSERT(!lexer.hadError)
   auto tokens = lexer.tokens;
