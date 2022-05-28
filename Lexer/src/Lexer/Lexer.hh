@@ -25,7 +25,7 @@ private:
       {"class", KeywordKind::Class},   {"true", KeywordKind::True},
       {"false", KeywordKind::False},   {"type", KeywordKind::Type},
       {"switch", KeywordKind::Switch}, {"async", KeywordKind::Async},
-      {"await", KeywordKind::Await}};
+      {"await", KeywordKind::Await},   {"return", KeywordKind::Return}};
 
   std::map<std::string, OperatorKind> operators{
       {"+", OperatorKind::Plus},       {"-", OperatorKind::Minus},
@@ -44,6 +44,12 @@ private:
       {"**", OperatorKind::Power},     {"**=", OperatorKind::PowerEq},
       {":", OperatorKind::Colon},      {"?", OperatorKind::Question_Mark},
       {"|", OperatorKind::Or},         {"&", OperatorKind::And}};
+
+  std::map<std::string, OtherKind> others{
+      {"(", OtherKind::L_Paren},   {")", OtherKind::R_Paren},
+      {"{", OtherKind::L_Brace},   {"}", OtherKind::R_Brace},
+      {"[", OtherKind::L_Bracket}, {"]", OtherKind::R_Bracket},
+      {",", OtherKind::Comma}};
 
   Token number();
   Token string();

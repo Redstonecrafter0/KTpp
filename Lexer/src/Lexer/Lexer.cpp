@@ -24,6 +24,10 @@ bool is_identifier_start(char c) { return isalpha(c) || c == '_'; }
 
 bool is_identifier_part(char c) { return is_identifier_start(c) || isdigit(c); }
 
+bool is_number_part(char c) {
+  return isdigit(c) || c == '.' || c == 'e' || c == '_' || c == '-';
+}
+
 void Lexer::tokenize() {
   TokenKind kind = OtherKind::Bad;
   std::any literal = nullptr;
@@ -62,7 +66,7 @@ Token Lexer::number() {
   for (;;) {
     int n = 0;
     char current = peek();
-    if (current == '\0')
+    if (!is_number_part(current))
       break;
     lexme += current;
     advance();
@@ -163,6 +167,11 @@ std::optional<Token> Lexer::otherToken() {
   TokenKind kind = OtherKind::Bad;
   std::any literal = nullptr;
   std::string lexme;
+
+  if (others.contains(lexme + c)) {
+    advance();
+    return Token(others.at(lexme + c), lexme + c, position, line, literal);
+  }
 
   if (c == '\"') {
     advance();
