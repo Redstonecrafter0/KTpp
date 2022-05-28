@@ -7,6 +7,7 @@ set(CMAKE_CXX_FLAGS  "-g")
 include(CTest)
 enable_testing()
 add_subdirectory(Lexer)
+add_subdirectory(Logger)
 
 add_executable(ktpp main.cpp)
 
