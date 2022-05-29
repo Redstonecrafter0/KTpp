@@ -23,6 +23,7 @@ int main() {
   combined->Log(ktpp::logger::LogLevel::Warn, "Test", "Warn message");
   combined->Log(ktpp::logger::LogLevel::Error, "Test", "Error message");
   combined->Log(ktpp::logger::LogLevel::Severe, "Test", "Severe message");
+  combined->Log(ktpp::logger::LogLevel::Debug, "Test", "Hello\nworld\n!");
 
   std::cout << ss1.str() << std::endl;
   std::cout << ss2.str() << std::endl;

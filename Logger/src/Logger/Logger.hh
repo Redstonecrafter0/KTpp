@@ -8,9 +8,10 @@ namespace ktpp::logger {
 enum LogLevel { Debug, Info, Warn, Error, Severe };
 class Logger {
 public:
-  virtual void Log(LogLevel level, const std::string &message){};
+  virtual void Log(LogLevel level, const std::string &message,
+                   size_t line_offset = 0){};
   virtual void Log(LogLevel level, const std::string &source,
-                   const std::string &message){};
+                   const std::string &message, size_t line_offset = 0){};
   virtual ~Logger() = default;
 };
 

@@ -1,5 +1,7 @@
 #include "Logger/Logger.hh"
+#include "stdint.h"
 #include <iostream>
+#include <sstream>
 
 namespace ktpp::logger {
 
@@ -30,39 +32,45 @@ public:
   LogWriter(std::ostream *ostream, LogLevel min_level, bool colors)
       : ostream(ostream), min_level(min_level), colors(colors) {}
 
-  void Log(LogLevel level, const std::string &message) override {
+  void Log(LogLevel level, const std::string &message,
+           size_t line_offset) override {
     if (level < min_level)
       return;
     try {
+      std::stringstream logOutput;
       if (colors) {
-        *ostream << log_level_color(level);
+        logOutput << log_level_color(level);
       }
-      *ostream << "[" << level << "] " << message;
+      std::stringstream header;
+      header << "[" << level << "] ";
+      logOutput << header.str();
+      int header_length = header.str().length() + line_offset;
+      std::string messages = message;
+      std::string spaces = std::string(header_length, ' ');
+      size_t pos = 0;
+      std::vector<std::string> lines;
+      while ((pos = messages.find('\n')) != std::string::npos) {
+        lines.push_back(messages.substr(0, pos));
+        messages.erase(0, pos + 1);
+      }
+      for (const auto &line : lines) {
+        logOutput << line << "\n" << spaces;
+      }
+      logOutput << messages;
       if (colors) {
-        *ostream << log_level_reset();
+        logOutput << log_level_reset();
       }
-      *ostream << std::endl;
+      *ostream << logOutput.str() << std::endl;
     } catch (std::exception e) {
       std::cerr << "Error while logging: " << e.what() << std::endl;
     }
   }
 
   void Log(LogLevel level, const std::string &source,
-           const std::string &message) override {
+           const std::string &message, size_t line_offset) override {
     if (level < min_level)
       return;
-    try {
-      if (colors) {
-        *ostream << log_level_color(level);
-      }
-      *ostream << "[" << level << "] " << source << ": " << message;
-      if (colors) {
-        *ostream << log_level_reset();
-      }
-      *ostream << std::endl;
-    } catch (std::exception e) {
-      std::cerr << "Error while logging: " << e.what() << std::endl;
-    }
+    Log(level, source + ": " + message, line_offset + source.length() + 2);
   }
 
   ~LogWriter() override { ostream->flush(); }
@@ -74,16 +82,17 @@ private:
 
 public:
   CombinedLogger(std::vector<Logger *> loggers) : loggers(loggers) {}
-  void Log(LogLevel level, const std::string &message) override {
+  void Log(LogLevel level, const std::string &message,
+           size_t line_offset) override {
     for (auto &logger : loggers) {
-      logger->Log(level, message);
+      logger->Log(level, message, line_offset);
     }
   }
 
   void Log(LogLevel level, const std::string &source,
-           const std::string &message) override {
+           const std::string &message, size_t line_offset) override {
     for (auto &logger : loggers) {
-      logger->Log(level, source, message);
+      logger->Log(level, source, message, line_offset);
     }
   }
 
@@ -102,26 +111,28 @@ private:
 public:
   PrefixedLogger(std::unique_ptr<Logger> logger, std::string prefix)
       : logger(std::move(logger)), prefix(prefix) {}
-  void Log(LogLevel level, const std::string &message) override {
-    logger->Log(level, prefix, message);
+
+  void Log(LogLevel level, const std::string &message,
+           size_t line_offset) override {
+    logger->Log(level, prefix, message, line_offset);
   }
 
   void Log(LogLevel level, const std::string &source,
-           const std::string &message) override {
-    logger->Log(level, prefix + "." + source, message);
+           const std::string &message, size_t line_offset) override {
+    logger->Log(level, prefix + "." + source, message, line_offset);
   }
 };
 
 std::ostream &operator<<(std::ostream &os, const LogLevel &level) {
   switch (level) {
   case LogLevel::Debug:
-    return os << "Debug";
+    return os << "Debug ";
   case LogLevel::Info:
-    return os << "Info";
+    return os << "Info  ";
   case LogLevel::Warn:
-    return os << "Warn";
+    return os << "Warn  ";
   case LogLevel::Error:
-    return os << "Error";
+    return os << "Error ";
   case LogLevel::Severe:
     return os << "Severe";
   }
