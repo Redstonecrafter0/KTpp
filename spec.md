@@ -79,7 +79,7 @@ General:
 }
 ```
 
-## Variable decleration (decl)
+## Variable declaration (decl)
 
 ```
 
@@ -87,7 +87,7 @@ Infered type:
 var x = <expr>
 Explicit type:
 var x: Type = <expr>
-Mutable decleration:
+Mutable declaration:
 var mut x = <expr>
 
 General:
@@ -95,7 +95,30 @@ var [mut] <id>[: Type] = <expr>
 
 ```
 
-## Function decleration (func)
+## Generic arguments (generics)
+
+```
+
+Not valid standing alone
+General:
+['<'[<id>[: Type],]...'>']
+
+```
+
+## Parameter list (params)
+
+```
+
+Not valid standing alone
+General:
+Typed:
+([<id>: Type,]...)
+Untyped:
+([<id>[: Type],]...)
+
+```
+
+## Function declaration (func)
 
 ```
 
@@ -119,11 +142,11 @@ With generics:
 fn a<K : Type, V> <stmt>
 
 General:
-fn identifier ['<'<id>[: Type]...'>'] [([<id>: Type]...)] [-> Type] <stmt>
+fn identifier <generics> [<params typed>] [-> Type] <stmt>
 
 ```
 
-## Function type decleration (fntype):
+## Function type declaration (fntype):
 
 ```
 
@@ -135,22 +158,22 @@ Usage:
 fn a(b: fn <T>(T, int) -> int) -> FuncType
 
 General:
-fn ['<'[<id>[: Type]]'>'] [([Type]...)] [-> Type]
+fn <generics> [([Type]...)] [-> Type]
 
 ```
 
-## Labda expressions (lambda)
+## Lambda expressions (lambda)
 
 ```
 
 Usage:
 
-fn a(b: fn(int, int) -> int) b(1, 2)
+var a = fn (b: fn(int, int) -> int) b(1, 2)
 
 a(fn (a, b) a + b)
 
 General:
-fn ['<'<id>[: Type]...'>'] [(<id>[: Type]...)] [-> Type] <stmt>
+fn <generics> [<params untyped>] [-> Type] <stmt>
 
 ```
 
@@ -192,10 +215,10 @@ class Identifier : Superclass {
 
 General:
 
-class Identifier [: Superclass] {
+class Identifier <generics> [: Superclass] {
   [[pub] <id>[: Type] [= <expr>]]...
 
-  [init[(<id>[: Type]...)] {
+  [init[<params typed>] {
     <stmt>
   }]
 
@@ -228,7 +251,7 @@ interface Identifier<K : Type, V> : Superinterface {
 General:
 
 interface Identifier['<'[<id>[: Type]]...'>'] [: Supertype [, Supertype]...] {
-  fn <id> ['<'<id>[: Type]...'>'] [([<id>: Type]...)] [-> Type]
+  [fn <id> [<generics>] [<params typed>] [-> Type]]...
 }
 
 ```
@@ -241,7 +264,7 @@ Usage:
 function<Type, Type>(arg1, arg2)
 
 General:
-identifier[<Type...>]([<expr>]...)
+identifier['<'[Type]...'>']([<expr>]...)
 
 ```
 
@@ -437,7 +460,7 @@ Usage:
 type Z = X<A>
 
 General:
-type <id>['<'[<id>[: Type]]...'>'] = <expr>
+type <id>[<generics>] = <expr>
 
 ```
 
@@ -515,7 +538,7 @@ switch <expr> {
   [_ -> <stmt>]
 }
 
-``
+```
 
 # Methods
 
