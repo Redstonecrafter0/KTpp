@@ -51,3 +51,7 @@ auto eachToken(std::string code) {
   int n = 0;
   return lexer.tokens;
 }
+
+auto token(TokenKind kind, std::string lexme) {
+  return Token(kind, lexme, TextSpan("mockfile", 0, 0, 0));
+}

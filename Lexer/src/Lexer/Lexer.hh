@@ -20,7 +20,8 @@ private:
   std::string filePath;
   std::string source;
 
-  size_t line = 1, position = 0, current = 0, start = 0;
+  size_t line = 1, position = 0, current = 0, start = 0, lineStart = 0,
+         column = 0;
   std::map<std::string, TokenKind> keywords{
       {"var", KeywordKind::Var},
       {"mut", KeywordKind::Mut},
@@ -75,6 +76,7 @@ private:
   Token number();
   Token string();
   Token identifier();
+  TextSpan span();
   std::optional<Token> otherToken();
 
   char peek(size_t offset = 0);

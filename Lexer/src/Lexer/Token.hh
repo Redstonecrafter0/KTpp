@@ -97,21 +97,27 @@ enum class OtherKind {
 };
 using TokenKind =
     std::variant<OperatorKind, KeywordKind, LiteralKind, OtherKind>;
+
+class TextSpan {
+public:
+  const std::string filePath;
+  const size_t line;
+  const size_t start;
+  const size_t end;
+  TextSpan(std::string filePath, int line, int start, int end)
+      : filePath(filePath), line(line), start(start), end(end) {}
+  size_t length() { return end - start; }
+};
+
 class Token {
 public:
   TokenKind kind;
   std::string lexeme;
-  size_t position, line;
+  TextSpan span;
   std::any literal;
 
-  Token(TokenKind kind, std::string lexeme, size_t position,
-        size_t line) noexcept
-      : kind{kind}, lexeme(lexeme), position(position), line(line),
-        literal(nullptr) {}
-
-  Token(TokenKind kind, std::string lexeme, size_t position, size_t line,
-        std::any literal) noexcept
-      : kind{kind}, lexeme(lexeme), position(position), line(line),
-        literal(literal) {}
+  Token(TokenKind kind, std::string lexeme, TextSpan span,
+        std::any literal = nullptr) noexcept
+      : kind{kind}, lexeme(lexeme), span(span), literal(nullptr) {}
 };
 } // namespace ktpp::lexer

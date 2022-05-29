@@ -3,14 +3,14 @@
 void test_decl() {
   auto tokens = eachToken("var mut a = 1 + 2");
   auto expected = std::vector<Token>({
-      Token(KeywordKind::Var, "var", 0, 0),
-      Token(KeywordKind::Mut, "mut", 0, 0),
-      Token(LiteralKind::Identifier, "a", 0, 0),
-      Token(OperatorKind::Equals, "=", 0, 0),
-      Token(LiteralKind::Int, "1", 0, 0),
-      Token(OperatorKind::Plus, "+", 0, 0),
-      Token(LiteralKind::Int, "2", 0, 0),
-      Token(OtherKind::Eof, "", 0, 0),
+      token(KeywordKind::Var, "var"),
+      token(KeywordKind::Mut, "mut"),
+      token(LiteralKind::Identifier, "a"),
+      token(OperatorKind::Equals, "="),
+      token(LiteralKind::Int, "1"),
+      token(OperatorKind::Plus, "+"),
+      token(LiteralKind::Int, "2"),
+      token(OtherKind::Eof, ""),
   });
 
   for (auto i = 0; i < expected.size(); i++) {
@@ -22,25 +22,25 @@ void test_decl() {
 void test_fndef() {
   auto tokens = eachToken("fn foo<K,V>(t: Type) -> int { return \"foo\" }");
   auto expected = std::vector<Token>({
-      Token(KeywordKind::Fn, "fn", 0, 0),
-      Token(LiteralKind::Identifier, "foo", 0, 0),
-      Token(OperatorKind::Less, "<", 0, 0),
-      Token(LiteralKind::Identifier, "K", 0, 0),
-      Token(OtherKind::Comma, ",", 0, 0),
-      Token(LiteralKind::Identifier, "V", 0, 0),
-      Token(OperatorKind::Greater, ">", 0, 0),
-      Token(OtherKind::L_Paren, "(", 0, 0),
-      Token(LiteralKind::Identifier, "t", 0, 0),
-      Token(OtherKind::Colon, ":", 0, 0),
-      Token(LiteralKind::Identifier, "Type", 0, 0),
-      Token(OtherKind::R_Paren, ")", 0, 0),
-      Token(OtherKind::Arrow, "->", 0, 0),
-      Token(LiteralKind::Identifier, "int", 0, 0),
-      Token(OtherKind::L_Brace, "{", 0, 0),
-      Token(KeywordKind::Return, "return", 0, 0),
-      Token(LiteralKind::String, "\"foo\"", 0, 0),
-      Token(OtherKind::R_Brace, "}", 0, 0),
-      Token(OtherKind::Eof, "", 0, 0),
+      token(KeywordKind::Fn, "fn"),
+      token(LiteralKind::Identifier, "foo"),
+      token(OperatorKind::Less, "<"),
+      token(LiteralKind::Identifier, "K"),
+      token(OtherKind::Comma, ","),
+      token(LiteralKind::Identifier, "V"),
+      token(OperatorKind::Greater, ">"),
+      token(OtherKind::L_Paren, "("),
+      token(LiteralKind::Identifier, "t"),
+      token(OtherKind::Colon, ":"),
+      token(LiteralKind::Identifier, "Type"),
+      token(OtherKind::R_Paren, ")"),
+      token(OtherKind::Arrow, "->"),
+      token(LiteralKind::Identifier, "int"),
+      token(OtherKind::L_Brace, "{"),
+      token(KeywordKind::Return, "return"),
+      token(LiteralKind::String, "\"foo\""),
+      token(OtherKind::R_Brace, "}"),
+      token(OtherKind::Eof, ""),
   });
 
   for (auto i = 0; i < expected.size(); i++) {
@@ -52,15 +52,15 @@ void test_fndef() {
 void test_oop() {
   auto tokens = eachToken("class Foo {  } interface Bar {  }");
   auto expected = std::vector<Token>({
-      Token(KeywordKind::Class, "class", 0, 0),
-      Token(LiteralKind::Identifier, "Foo", 0, 0),
-      Token(OtherKind::L_Brace, "{", 0, 0),
-      Token(OtherKind::R_Brace, "}", 0, 0),
-      Token(KeywordKind::Interface, "interface", 0, 0),
-      Token(LiteralKind::Identifier, "Bar", 0, 0),
-      Token(OtherKind::L_Brace, "{", 0, 0),
-      Token(OtherKind::R_Brace, "}", 0, 0),
-      Token(OtherKind::Eof, "", 0, 0),
+      token(KeywordKind::Class, "class"),
+      token(LiteralKind::Identifier, "Foo"),
+      token(OtherKind::L_Brace, "{"),
+      token(OtherKind::R_Brace, "}"),
+      token(KeywordKind::Interface, "interface"),
+      token(LiteralKind::Identifier, "Bar"),
+      token(OtherKind::L_Brace, "{"),
+      token(OtherKind::R_Brace, "}"),
+      token(OtherKind::Eof, ""),
   });
 
   for (auto i = 0; i < expected.size(); i++) {

@@ -1,11 +1,11 @@
-#include <iostream>
-
 #include "Lexer/Lexer.hh"
+#include <iostream>
+#include <sstream>
 
 int main() {
   while (true) {
     std::string source;
-    std::cin >> source;
+    getline(std::cin, source);
     auto logger =
         ktpp::logger::create_logger(&std::cout, ktpp::logger::LogLevel::Info);
 
@@ -15,8 +15,6 @@ int main() {
     if (lexer.hadError)
       continue;
     for (auto t : lexer.tokens)
-      std::cout << "Lexeme: " << t.lexeme << "\nPosition: " << t.position
-                << "\n"
-                << std::endl;
+      std::cout << "Lexeme: " << t.lexeme << std::endl;
   }
 }

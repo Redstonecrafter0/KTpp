@@ -18,7 +18,7 @@ void Lexer::lex() {
     }
   }
 
-  tokens.push_back(Token(OtherKind::Eof, "", line, current, nullptr));
+  tokens.push_back(Token(OtherKind::Eof, "", span()));
 }
 
 void error(std::string e) { throw std::runtime_error(e); }
@@ -136,30 +136,26 @@ Token Lexer::number() {
   }
 
   if (is_float)
-    return Token(LiteralKind::Float, lexme, position, line, float_val);
+    return Token(LiteralKind::Float, lexme, span(), float_val);
   else
-    return Token(LiteralKind::Int, lexme, position, line, int_val);
+    return Token(LiteralKind::Int, lexme, span(), int_val);
 }
 
 Token Lexer::string() {
   std::string lexme;
   int start_line = line;
   while ((peek() != '"') && !isAtEnd()) {
-    if (peek() == '\n')
-      line++;
     lexme += peek();
     advance();
   }
 
   if (isAtEnd()) {
-    emit(logger::LogLevel::Error, "Unterminated string in " + filePath + ":" +
-                                      std::to_string(start_line));
     error("Unterminated string");
   }
   advance();
 
   std::string value = lexme;
-  return Token(LiteralKind::String, "\"" + value + "\"", position, line, value);
+  return Token(LiteralKind::String, "\"" + value + "\"", span(), value);
 }
 
 Token Lexer::identifier() {
@@ -169,7 +165,7 @@ Token Lexer::identifier() {
   }
   TokenKind kind =
       keywords.contains(lexme) ? keywords.at(lexme) : LiteralKind::Identifier;
-  return Token(kind, lexme, position, line, lexme);
+  return Token(kind, lexme, span(), lexme);
 }
 
 std::optional<Token> Lexer::otherToken() {
@@ -182,7 +178,7 @@ std::optional<Token> Lexer::otherToken() {
     lexme += c;
     advance();
     kind = others.at(lexme);
-    return Token(kind, lexme, position, line, literal);
+    return Token(kind, lexme, span(), literal);
   }
 
   if (c == '-' && peek(1) == '>') {
@@ -190,7 +186,7 @@ std::optional<Token> Lexer::otherToken() {
     advance();
     lexme += advance();
     kind = others.at(lexme);
-    return Token(kind, lexme, position, line, literal);
+    return Token(kind, lexme, span(), literal);
   }
 
   if (c == '\"') {
@@ -199,7 +195,7 @@ std::optional<Token> Lexer::otherToken() {
   }
   if (operators.contains(lexme)) {
     kind = operators.at(lexme);
-    return Token(kind, lexme, position, line, literal);
+    return Token(kind, lexme, span(), literal);
   }
   while (operators.contains(lexme + c)) {
     lexme += peek();
@@ -210,7 +206,7 @@ std::optional<Token> Lexer::otherToken() {
   }
   if (operators.contains(lexme)) {
     kind = operators.at(lexme);
-    return Token(kind, lexme, position, line, literal);
+    return Token(kind, lexme, span(), literal);
   }
   return std::nullopt;
 }
@@ -222,7 +218,15 @@ char Lexer::peek(size_t offset) {
 char Lexer::advance() {
   position++;
   current++;
-  return source.at(current - 1);
+  char c = source.at(current - 1);
+  if (c == '\n') {
+    lineStart = current;
+    line++;
+    column = 0;
+  } else {
+    column++;
+  }
+  return c;
 }
 
 bool Lexer::advance(bool condition) {
@@ -240,7 +244,20 @@ bool Lexer::match(char expected, size_t offset) {
 bool Lexer::isAtEnd() { return current >= source.length(); }
 
 void Lexer::emit(logger::LogLevel level, std::string message) {
+
+  size_t lineLength = current - lineStart;
+  size_t squiggleLength = current - start;
+  std::string squiggles = std::string(squiggleLength, '^');
+  std::string spaces =
+      std::string(message.length() + lineLength - squiggleLength + 2, ' ');
+  std::string code = source.substr(lineStart, lineLength);
+  std::string position =
+      filePath + ":" + std::to_string(line) + ":" + std::to_string(column);
+  std::string textHighlight = "\n" + spaces + squiggles;
+
   logger->Log(level, "Lexer",
-              message + " " + filePath + ":" + std::to_string(line));
+              message + " \"" + code + "\"" + " " + position + textHighlight);
 }
+
+TextSpan Lexer::span() { return TextSpan(filePath, line, start, current); };
 } // namespace ktpp::lexer
