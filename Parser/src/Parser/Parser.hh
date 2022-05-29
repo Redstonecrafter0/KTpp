@@ -2,65 +2,63 @@
 #include "Stmt.hh"
 #include <vector>
 
+using namespace ktpp::lexer;
+
 namespace ktpp::parser {
-class Parser {
-public:
-  bool hadError = false;
-  Parser(logger::Logger *logger, std::vector<lexer::Token> tokens);
-  std::vector<parser::Stmt> parse();
+  class Parser {
+  public:
+    bool hadError = false;
+    Parser(ktpp::logger::Logger* logger, std::string filePath, std::string source);
+    std::vector<Stmt> parse();
 
-private:
-  logger::Logger *logger;
-  std::vector<lexer::Token> tokens;
+  private:
+    ktpp::logger::Logger* logger;
+    std::string filePath;
+    std::string source;
+    std::vector<Token> tokens;
 
-  Stmt declaration();
-  Stmt statement();
-  If ifStatement();
-  Switch<Stmt> switchStatement();
-  Stmt forStatement();
-  While whileStatement(bool isDoWhile = false);
-  Break breakStatement();
-  Continue continueStatement();
-  Class classDeclaration();
-  Return returnStatement();
-  Function functionDeclaration();
-  Var varDeclaration();
-  Expression expressionStatement();
-  std::vector<Stmt> block();
-  Type parseType();
+    Stmt declaration();
+    Stmt statement();
+    If ifStatement();
+    Switch<Stmt> switchStatement();
+    std::variant<For, ForEach> forStatement();
+    While whileStatement(bool isDoWhile = false);
+    Break breakStatement();
+    Continue continueStatement();
+    Class classDeclaration();
+    Return returnStatement();
+    Function functionDeclaration();
+    Var varDeclaration();
+    Expression expressionStatement();
+    std::vector<Stmt> scope();
 
-  std::optional<Expr> canExpression();
-  Expr expression();
-  std::optional<Expr> p14();
-  std::optional<Expr> p13();
-  std::optional<Expr> p12();
-  std::optional<Expr> p11();
-  std::optional<Expr> p10();
-  std::optional<Expr> p9();
-  std::optional<Expr> p8();
-  std::optional<Expr> p7();
-  std::optional<Expr> p6();
-  std::optional<Expr> p5();
-  std::optional<Expr> p4();
-  std::optional<Expr> p3();
-  std::optional<Expr> p2();
-  std::optional<Expr> p1();
+    std::optional<Expr> canExpression();
+    Expr expression() throw(ParseError);
 
-  void synchronize();
-  void error(lexer::Token token, std::string message);
+    Binary binary();
+    Unary unary();
+    Grouping grouping();
+    Variable variable();
+    Assign assign();
+    Generic generic();
+    Type type();
+    Lambda lambda();
 
-  lexer::Token peek(size_t offset = 0);
-  lexer::Token advance();
-  lexer::Token consume(lexer::TokenKind type, std::string message);
-  bool isAtEnd();
-  bool check(lexer::TokenKind kind);
-  bool match(lexer::TokenKind kind);
-  bool match(std::vector<lexer::TokenKind> kinds);
-};
+    void synchronize();
+    void error(Token token, std::string message) throw(ParseError);
 
-struct ParseError : public std::exception {
-public:
-  std::string message;
-  ParseError(std::string message) : message(message) {}
-};
+    Token peek(size_t offset = 0);
+    Token advance();
+    Token consume(TokenKind type, std::string message);
+    bool isAtEnd();
+    bool check(TokenKind kind);
+    bool match(TokenKind kind);
+    bool match(std::vector<TokenKind> kinds);
+  };
+
+  struct ParseError : public std::exception {
+  public:
+    std::string message;
+    ParseError(std::string message) : message(message) {}
+  };
 } // namespace ktpp::parser

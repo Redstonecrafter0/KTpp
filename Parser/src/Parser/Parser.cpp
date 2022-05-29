@@ -1,18 +1,14 @@
-#include "Parser/Parser.hh"
+#include "Parser.hh"
 
-template <typename Base, typename T> inline bool instanceof (const T) {
+template <typename Base, typename T>
+inline bool instanceof (const T) {
   return std::is_base_of<Base, T>::value;
 }
 
 namespace ktpp::parser {
-using OperatorKind = lexer::OperatorKind;
-using KeywordKind = lexer::KeywordKind;
-using OtherKind = lexer::OtherKind;
-using LiteralKind = lexer::LiteralKind;
+bool isStrictlyUnop(OperatorKind kind) { return kind == OperatorKind::Bang; }
 
-bool is_strictly_unop(OperatorKind kind) { return kind == OperatorKind::Bang; }
-
-bool is_assignment(OperatorKind kind) {
+bool isAssignment(OperatorKind kind) {
   return kind == OperatorKind::Equals || kind == OperatorKind::PlusEq ||
          kind == OperatorKind::MinusEq || kind == OperatorKind::StarEq ||
          kind == OperatorKind::SlashEq || kind == OperatorKind::ModEq ||
@@ -20,21 +16,28 @@ bool is_assignment(OperatorKind kind) {
          kind == OperatorKind::PowerEq;
 }
 
-bool is_binop(OperatorKind kind) {
-  return !(is_strictly_unop(kind) || is_assignment(kind));
+bool isOperational(OperatorKind kind) {
+  return (OtherKind&)kind == OtherKind::Question_Mark ||
+         (OtherKind&)kind == OtherKind::Colon ||
+         (OtherKind&)kind == OtherKind::Arrow;
 }
 
-Parser::Parser(logger::Logger *logger, std::vector<lexer::Token> tokens)
-    : logger(logger), tokens(tokens) {
-  tokens = tokens;
+bool isBinop(OperatorKind kind) {
+  return !(isStrictlyUnop(kind) || isAssignment(kind) || isOperational(kind));
+}
+
+Parser::Parser(ktpp::logger::Logger* logger, std::string filePath,
+               std::string source)
+    : logger(logger), filePath(filePath), source(source) {
+  Lexer lexer = Lexer(logger, filePath, source);
+  lexer.lex();
+  tokens = lexer.tokens;
 }
 std::vector<parser::Stmt> Parser::parse() {
   std::vector<Stmt> statements{};
   try {
-    while (!isAtEnd())
-      statements.push_back(declaration());
-  } catch (ParseError &e) {
-    logger->Log(logger::LogLevel::Error, "Parser", e.what());
+    while (!isAtEnd()) statements.push_back(declaration());
+  } catch (ParseError& e) {
     hadError = 0;
     return std::vector<parser::Stmt>();
   }
@@ -42,34 +45,30 @@ std::vector<parser::Stmt> Parser::parse() {
 }
 
 Stmt Parser::declaration() {
-  if (match(KeywordKind::Class))
-    return classDeclaration();
-  if (match(KeywordKind::Fn))
-    return functionDeclaration();
-  if (match(KeywordKind::Var))
-    return varDeclaration();
-  return statement();
+  try {
+    if (match(KeywordKind::Class)) return classDeclaration();
+    if (match(KeywordKind::Fn))
+      if (match(LiteralKind::Identifier)) return functionDeclaration();
+    if (match(KeywordKind::Var)) return varDeclaration();
+    return statement();
+  } catch (std::any&) {
+    synchronize();
+    return;
+  }
 }
 
 Stmt Parser::statement() {
-  if (match(KeywordKind::For))
-    return forStatement();
-  if (match(KeywordKind::If))
-    return ifStatement();
-  if (match(KeywordKind::Return))
-    return returnStatement();
+  if (match(KeywordKind::For)) return std::get<Stmt>(forStatement());
+  if (match(KeywordKind::If)) return ifStatement();
+  if (match(KeywordKind::Return)) return returnStatement();
   if (match(KeywordKind::Do)) {
     consume(KeywordKind::While, "Expect \"while\" after \"do\".");
     return whileStatement(true);
   }
-  if (match(KeywordKind::While))
-    return whileStatement();
-  if (match(KeywordKind::Break))
-    return breakStatement();
-  if (match(KeywordKind::Continue))
-    return continueStatement();
-  if (match(OtherKind::L_Brace))
-    return Block({block()});
+  if (match(KeywordKind::While)) return whileStatement();
+  if (match(KeywordKind::Break)) return breakStatement();
+  if (match(KeywordKind::Continue)) return continueStatement();
+  if (match(OtherKind::L_Brace)) return Scope({scope()});
   return expressionStatement();
 }
 
@@ -78,8 +77,7 @@ If Parser::ifStatement() {
 
   Stmt thenBranch = statement();
   std::optional<ktpp::parser::Stmt> elseBranch;
-  if (match(KeywordKind::Else))
-    elseBranch = statement();
+  if (match(KeywordKind::Else)) elseBranch = statement();
   return If(condition, thenBranch, elseBranch);
 }
 
@@ -91,22 +89,21 @@ Switch<Stmt> Parser::switchStatement() {
   std::optional<Stmt> defaultCase;
   while (!match(OtherKind::R_Brace)) {
     if (peek().lexeme == "_") {
-      if (defaultCase)
-        error(peek(), "Default case already exists.");
+      if (defaultCase) error(peek(), "Default case already exists.");
       advance();
-      defaultCase = Block(block());
+      defaultCase = Scope(scope());
       continue;
     }
     Expr v = expression();
     consume(OtherKind::Arrow, "Expect \"->\" after value.");
-    lexer::Token arrow = peek(-1);
-    cases.push_back(SwitchCase<Stmt>(v, Block(block()), arrow));
+    Token arrow = peek(-1);
+    cases.push_back(SwitchCase<Stmt>(v, Scope(scope()), arrow));
   }
 
   return Switch<Stmt>(condition, cases, defaultCase);
 }
 
-Stmt Parser::forStatement() {
+std::variant<For, ForEach> Parser::forStatement() {
   std::optional<Stmt> initializer;
   if (match(OtherKind::Semicolon))
     initializer = std::nullopt;
@@ -119,33 +116,31 @@ Stmt Parser::forStatement() {
 
   if (initializer.has_value())
     if (instanceof <Var>(initializer.value()))
-      if (!((Var &)initializer.value()).initializer.has_value())
+      if (!((Var&)initializer.value()).initializer.has_value())
         return ForEach(
-            (Var &)initializer.value(),
+            (Var&)initializer.value(),
             consume(OtherKind::Colon, "Expect ':' after initialization."),
             expression(), statement());
 
   std::optional<Expr> condition = std::nullopt;
-  if (!check(OtherKind::Semicolon))
-    condition = expression();
+  if (!check(OtherKind::Semicolon)) condition = expression();
   consume(OtherKind::Semicolon, "Expect ';' after loop condition.");
 
   std::optional<Expr> increment = std::nullopt;
-  if (!check(OtherKind::R_Paren))
-    increment = expression();
+  if (!check(OtherKind::R_Paren)) increment = expression();
 
   Stmt body = statement();
   if (increment.has_value())
-    body = Block({body, Expression(increment.value())});
-  if (condition.has_value())
-    condition = Literal(true);
+    body = Scope({body, Expression(increment.value())});
+  if (condition.has_value()) condition = Literal(true);
   return For(initializer.value(), condition.value(), increment.value(), body);
 }
 
 While Parser::whileStatement(bool isDoWhile) {
-  Expr condition = expression();
+  std::optional<Expr> condition = canExpression();
   Stmt body = statement();
-  return While(condition, body, isDoWhile);
+  return While(condition.has_value() ? condition.value() : Literal(true), body,
+               isDoWhile);
 }
 
 Break Parser::breakStatement() { return Break(peek(-1)); }
@@ -153,28 +148,19 @@ Break Parser::breakStatement() { return Break(peek(-1)); }
 Continue Parser::continueStatement() { return Continue(peek(-1)); }
 
 Class Parser::classDeclaration() {
-  lexer::Token name = consume(LiteralKind::Identifier, "Expect class name.");
-  std::optional<std::vector<lexer::Token>> generics{};
-  if (match(OperatorKind::Less))
-    while (!match(OperatorKind::Greater)) {
-      consume(LiteralKind::Identifier, "Expect identifier.");
-      if (match(OtherKind::Comma)) {
-        if (peek(1).kind != (lexer::TokenKind)(OperatorKind::Greater) &&
-            peek(1).kind != (lexer::TokenKind)(LiteralKind::Identifier)) {
-          error(peek(), "Expect identifier.");
-        } else {
-          generics.value().push_back(peek(-2));
-        }
-      }
-    }
+  Token name = consume(LiteralKind::Identifier, "Expect class name.");
+  std::optional<std::vector<Generic>> generics = std::nullopt;
+  if (match(OperatorKind::Less)) {
+    generics = std::vector<Generic>();
+    while (!match(OperatorKind::Greater)) generics.value().push_back(generic());
+  }
 
-  std::optional<Variable> superclass = std::nullopt;
-  if (match(OtherKind::Colon)) {
+  std::optional<Expr> superclass = std::nullopt;
+  if (match(OtherKind::Colon))
     if (!check(LiteralKind::Identifier))
       error(peek(), "Expect identifier.");
     else
-      p1();
-  }
+      superclass = expression();
 
   consume(OtherKind::L_Brace, "Expect '{' before class body.");
 
@@ -187,64 +173,66 @@ Class Parser::classDeclaration() {
       fields.push_back(varDeclaration());
 
   consume(OtherKind::R_Brace, "Expect '}' after class body.");
-  return Class(name, fields, methods, superclass,
-               generics.value().size() > 0 ? generics : std::nullopt);
+  return Class(name, fields, methods, superclass, generics);
 }
 
 Return Parser::returnStatement() {
-  lexer::Token kw = peek(-1);
+  Token kw = peek(-1);
   std::optional<Expr> v = canExpression();
   return Return(kw, v);
 }
 
 Function Parser::functionDeclaration() {
-  lexer::Token name = consume(LiteralKind::Identifier, "Expect identifier.");
+  Token name = consume(LiteralKind::Identifier, "Expect identifier.");
 
-  std::vector<lexer::Token> generics{};
-  if (match(OperatorKind::Less))
-    while (!match(OperatorKind::Greater)) {
-      generics.push_back(advance());
-      if (match(OtherKind::Comma))
-        continue;
-      if (!match(OperatorKind::Greater))
-        error(peek(), "Expect ',' or '>'.");
-    }
+  std::optional<std::vector<Generic>> generics = std::nullopt;
+  if (match(OperatorKind::Less)) {
+    generics = std::vector<Generic>();
+    while (!match(OperatorKind::Greater)) generics.value().push_back(generic());
+  }
 
   std::optional<std::vector<Param>> params{};
   if (match(OtherKind::L_Paren))
     while (!match(OtherKind::R_Paren)) {
       consume(LiteralKind::Identifier, "Expect identifier.");
-      if (match(OtherKind::Comma)) {
-        if (peek(1).kind != (lexer::TokenKind)(OperatorKind::Greater) &&
-            peek(1).kind != (lexer::TokenKind)(LiteralKind::Identifier)) {
+      if (match(OtherKind::Comma))
+        if (peek(1).kind != (TokenKind)(OperatorKind::Greater) &&
+            peek(1).kind != (TokenKind)(LiteralKind::Identifier))
           error(peek(), "Expect identifier.");
-        } else {
-          lexer::Token n = peek(-2);
+        else {
+          Token n = peek(-2);
           consume(OtherKind::Colon, "Expect ':' after parameter name.");
-          params.value().push_back(Param(n, parseType()));
+          params.value().push_back(Param(n, type()));
         }
-      }
     }
   else
     params = std::nullopt;
-
-  consume(OtherKind::Arrow, "Expect '->' after parameter list.");
-  Type type = parseType();
-
   return Function(
-      name, generics.size() > 0 ? std::make_optional(generics) : std::nullopt,
-      params, Block(block()), type);
+      name, generics, params, Scope(scope()),
+      match(OtherKind::Arrow) ? std::make_optional(type()) : std::nullopt);
 }
 
-// Var Parser::varDeclaration();
+Var Parser::varDeclaration() {
+  bool isMut = match(KeywordKind::Mut);
+  Token name = consume(LiteralKind::Identifier, "Expect variable name.");
+  std::optional<Type> t =
+      match(OtherKind::Colon) ? std::make_optional(type()) : std::nullopt;
+  std::optional<Expr> initializer;
+
+  if (match(OtherKind::Colon))
+    if (match(OperatorKind::Equals))
+      initializer = expression();
+    else if (!isMut && !initializer.has_value())
+      error(name, "'const' declarations must be initialized.");
+  return Var(name, initializer, t, isMut);
+}
 
 Expression Parser::expressionStatement() {
   Expr expr = expression();
-  consume(OtherKind::Semicolon, "Expect ';' after expression.");
   return Expression(expr);
 }
 
-std::vector<Stmt> Parser::block() {
+std::vector<Stmt> Parser::scope() {
   std::vector<Stmt> statements{};
   while (!check(OtherKind::R_Brace) && !isAtEnd())
     statements.push_back(declaration());
@@ -253,39 +241,85 @@ std::vector<Stmt> Parser::block() {
   return statements;
 }
 
-Type Parser::parseType() {
-  lexer::Token id = consume(LiteralKind::Identifier, "Expect type name.");
-  std::vector<Type> generics{};
-  if (match(OperatorKind::Less))
-    while (!match(OperatorKind::Greater)) {
-      generics.push_back(parseType());
-      if (match(OtherKind::Comma))
-        continue;
-      if (!match(OperatorKind::Greater))
-        error(peek(), "Expect ',' or '>'.");
-    }
-  return Type(id, generics.size() > 0 ? std::make_optional(generics)
-                                      : std::nullopt);
+std::optional<Expr> Parser::canExpression() {
+  try {
+    return expression();
+  } catch (ParseError&) {
+    return std::nullopt;
+  }
 }
+Expr Parser::expression() throw(ParseError) {
+  Token t = peek();
+  std::optional<Expr> expr;
+  if (match(KeywordKind::Fn)) return lambda();
 
-std::optional<Expr> Parser::canExpression() { return p14(); }
-Expr Parser::expression() {
-  lexer::Token t = peek();
-  std::optional<Expr> expr = canExpression();
-  if (!expr.has_value())
-    error(t, "Expect expression.");
+  error(t, "Expect expression.");
   return expr.value();
 }
 
-void Parser::error(lexer::Token token, std::string message) {
-  throw ParseError("[" + std::to_string(token.line) + ":" +
-                   std::to_string(token.position) + "]" + message);
+Generic Parser::generic() {
+  Token LOp = peek(-1);
+  Generic generic = Generic(LOp, {});
+
+  while (!match(OperatorKind::Greater)) {
+    generic.type.insert(std::pair(
+        consume(LiteralKind::Identifier, "Expect identifier."),
+        match(OtherKind::Colon) ? std::make_optional(type()) : std::nullopt));
+    if (match(OtherKind::Comma))
+      continue;
+    else if (!match(OperatorKind::Greater))
+      error(peek(), "Expect ',' or '>'.");
+  }
+}
+
+Type Parser::type() {
+  Token id = consume(LiteralKind::Identifier, "Expect type name.");
+  std::vector<Generic> generics{};
+  if (match(OperatorKind::Less)) generics.push_back(generic());
+
+  std::optional<Type> extends =
+      match(OtherKind::Colon) ? std::make_optional(type()) : std::nullopt;
+  return Type(id,
+              generics.size() > 0 ? std::make_optional(generics) : std::nullopt,
+              extends);
+}
+
+Lambda Parser::lambda() {
+  Token kw = peek(-1);
+  std::optional<std::vector<Generic>> generics = std::nullopt;
+  if (match(OperatorKind::Less)) {
+    generics = std::vector<Generic>();
+    while (!match(OperatorKind::Greater)) generics.value().push_back(generic());
+  }
+
+  std::optional<std::vector<Param>> params{};
+  if (match(OtherKind::L_Paren))
+    while (!match(OtherKind::R_Paren)) {
+      consume(LiteralKind::Identifier, "Expect identifier.");
+      if (match(OtherKind::Comma))
+        if (peek(1).kind != (TokenKind)(OperatorKind::Greater) &&
+            peek(1).kind != (TokenKind)(LiteralKind::Identifier))
+          error(peek(), "Expect identifier.");
+        else {
+          Token n = peek(-2);
+          consume(OtherKind::Colon, "Expect ':' after parameter name.");
+          params.value().push_back(Param(n, type()));
+        }
+    }
+  else
+    params = std::nullopt;
+  std::optional<Type> t =
+      match(OtherKind::Arrow) ? std::make_optional(type()) : std::nullopt;
+  return Lambda(kw, generics, params, t, expression());
+}
+
+void Parser::error(Token token, std::string message) throw(ParseError) {
+  throw ParseError(message);
 }
 void Parser::synchronize() {
   advance();
   while (!isAtEnd()) {
-    if (std::holds_alternative<KeywordKind>(peek().kind))
-      switch (std::get<KeywordKind>(peek().kind)) {
+    switch (std::get<TokenKind>(peek().kind)) {
       case KeywordKind::Class:
       case KeywordKind::Fn:
       case KeywordKind::Var:
@@ -295,40 +329,33 @@ void Parser::synchronize() {
       case KeywordKind::While:
       case KeywordKind::Return:
         return;
-      default:
-        break;
-      }
+    }
 
     advance();
   }
 }
 
-lexer::Token Parser::consume(lexer::TokenKind type, std::string message) {
-  if (check(type))
-    return advance();
+Token Parser::consume(TokenKind type, std::string message) {
+  if (check(type)) return advance();
   error(peek(), message);
 }
-
-bool Parser::isAtEnd() {
-  return peek().kind == (lexer::TokenKind)OtherKind::Eof;
-}
-bool Parser::check(lexer::TokenKind kind) {
+bool Parser::isAtEnd() { return peek().kind == (TokenKind)OtherKind::Eof; }
+bool Parser::check(TokenKind kind) {
   return isAtEnd() ? false : peek().kind == kind;
 }
-bool Parser::match(lexer::TokenKind kind) {
+bool Parser::match(TokenKind kind) {
   if (check(kind)) {
     advance();
     return true;
   }
   return false;
 }
-bool Parser::match(std::vector<lexer::TokenKind> kinds) {
-  for (auto kind : kinds) {
+bool Parser::match(std::vector<TokenKind> kinds) {
+  for (auto kind : kinds)
     if (check(kind)) {
       advance();
       return true;
     }
-  }
   return false;
 }
-} // namespace ktpp::parser
+}  // namespace ktpp::parser

@@ -5,7 +5,6 @@
 
 namespace ktpp::lexer {
 enum class OperatorKind {
-
   // Arithmetic
   Power,
   Increment,
