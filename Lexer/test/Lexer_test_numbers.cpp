@@ -1,4 +1,4 @@
-#include "helpers.hh"
+#include "helpers.cc"
 #include <sstream>
 
 void test_int(std::string str, int64_t real) {

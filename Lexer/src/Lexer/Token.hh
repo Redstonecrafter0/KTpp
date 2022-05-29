@@ -118,6 +118,6 @@ public:
 
   Token(TokenKind kind, std::string lexeme, TextSpan span,
         std::any literal = nullptr) noexcept
-      : kind{kind}, lexeme(lexeme), span(span), literal(nullptr) {}
+      : kind{kind}, lexeme(lexeme), span(span), literal(literal) {}
 };
 } // namespace ktpp::lexer

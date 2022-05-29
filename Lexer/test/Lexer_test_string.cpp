@@ -1,4 +1,4 @@
-#include "helpers.hh"
+#include "helpers.cc"
 
 void test_string(std::string str, std::string real) {
   auto value = test_token(str, LiteralKind::String);

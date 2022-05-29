@@ -32,7 +32,6 @@ bool is_number_part(char c) {
 }
 
 void Lexer::tokenize() {
-  TokenKind kind = OtherKind::Bad;
   std::any literal = nullptr;
 
   auto other = otherToken();
@@ -60,11 +59,9 @@ void Lexer::tokenize() {
 Token Lexer::number() {
   int64_t int_val = 0;
   std::string lexme;
-  double_t float_val, fraction_size;
-  fraction_size = 1;
+  double_t float_val = 0, fraction_size = 1;
   bool is_float = false;
   bool is_power = false;
-  int i = 0;
 
   for (;;) {
     int n = 0;
@@ -143,7 +140,6 @@ Token Lexer::number() {
 
 Token Lexer::string() {
   std::string lexme;
-  int start_line = line;
   while ((peek() != '"') && !isAtEnd()) {
     lexme += peek();
     advance();
@@ -248,15 +244,14 @@ void Lexer::emit(logger::LogLevel level, std::string message) {
   size_t lineLength = current - lineStart;
   size_t squiggleLength = current - start;
   std::string squiggles = std::string(squiggleLength, '^');
-  std::string spaces =
-      std::string(message.length() + lineLength - squiggleLength + 2, ' ');
+  std::string spaces = std::string(lineLength - squiggleLength, ' ');
   std::string code = source.substr(lineStart, lineLength);
   std::string position =
       filePath + ":" + std::to_string(line) + ":" + std::to_string(column);
   std::string textHighlight = "\n" + spaces + squiggles;
 
   logger->Log(level, "Lexer",
-              message + " \"" + code + "\"" + " " + position + textHighlight);
+              code + textHighlight + "\n" + "[" + position + "] " + message);
 }
 
 TextSpan Lexer::span() { return TextSpan(filePath, line, start, current); };

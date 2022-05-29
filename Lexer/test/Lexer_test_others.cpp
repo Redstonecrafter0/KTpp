@@ -1,4 +1,4 @@
-#include "helpers.hh"
+#include "helpers.cc"
 
 void test_other(std::string str, OtherKind real) {
   auto value = test_token(str, real);

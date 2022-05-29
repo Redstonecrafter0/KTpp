@@ -48,7 +48,6 @@ auto eachToken(std::string code) {
   lexer.lex();
   ASSERT(!lexer.hadError)
   auto tokens = lexer.tokens;
-  int n = 0;
   return lexer.tokens;
 }
 

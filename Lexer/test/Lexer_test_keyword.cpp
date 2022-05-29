@@ -1,4 +1,4 @@
-#include "helpers.hh"
+#include "helpers.cc"
 
 void test_keyword(std::string str, KeywordKind real) {
   auto value = test_token(str, real);

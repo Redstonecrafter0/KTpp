@@ -1,9 +1,6 @@
 file(GLOB_RECURSE TESTS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
-file(GLOB_RECURSE HEADERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.hh)
 
-foreach(FILE ${HEADERS})
-  add_library(LexerTesters ${FILE})
-endforeach(FILE ${HEADERS})
+add_library(LexerTesters "helpers.cc")
 target_link_libraries(LexerTesters Lexer)
 
 

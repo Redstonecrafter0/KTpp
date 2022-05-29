@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 3.0.0)
 project(ktpp VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_CXX_FLAGS  "-g")
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "/DEBUG /W4")
+else()
+  set(CMAKE_CXX_FLAGS "-Wall -g -O0")
+endif()
 
 include(CTest)
 enable_testing()

@@ -1,4 +1,4 @@
-#include "helpers.hh"
+#include "helpers.cc"
 
 void test_operator(std::string str, OperatorKind real) {
   auto value = test_token(str, real);

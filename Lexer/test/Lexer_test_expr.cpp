@@ -1,4 +1,4 @@
-#include "helpers.hh"
+#include "helpers.cc"
 
 void test_decl() {
   auto tokens = eachToken("var mut a = 1 + 2");
