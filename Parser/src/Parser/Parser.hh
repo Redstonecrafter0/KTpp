@@ -1,18 +1,20 @@
+#include <vector>
+
 #include "Lexer/Lexer.hh"
 #include "Stmt.hh"
-#include <vector>
 
 using namespace ktpp::lexer;
 
 namespace ktpp::parser {
 class Parser {
-public:
+ public:
   bool hadError = false;
   Parser(ktpp::logger::Logger *logger, std::string filePath,
-         std::string source);
+         std::vector<Token> source);
   std::vector<std::unique_ptr<Stmt>> parse();
 
-private:
+ private:
+  size_t current = 0;
   ktpp::logger::Logger *logger;
   std::string filePath;
   std::string source;
@@ -22,7 +24,7 @@ private:
   std::unique_ptr<Stmt> statement();
   If ifStatement();
   Switch<std::unique_ptr<Stmt>> switchStatement();
-  std::variant<For, ForEach> forStatement();
+  std::unique_ptr<Stmt> forStatement();
   While whileStatement(bool isDoWhile = false);
   Break breakStatement();
   Continue continueStatement();
@@ -34,7 +36,7 @@ private:
   std::vector<std::unique_ptr<Stmt>> scope();
 
   std::optional<std::unique_ptr<Expr>> canExpression();
-  std::unique_ptr<Expr> expression() throw(ParseError);
+  std::unique_ptr<Expr> expression();
   std::unique_ptr<Expr> checkExtension(std::unique_ptr<Expr> first);
 
   Literal literal(Token t);
@@ -50,12 +52,13 @@ private:
   This thisExpr(Token keyword);
   Array array(Token bracket);
   IndexSignature indexing(std::unique_ptr<Expr> array, Token bracket);
-  Generic generic();
+  GenericParameters genericParams();
+  GenericArgs genericArgs();
   Type type();
   Lambda lambda();
 
   void synchronize();
-  void error(Token token, std::string message) throw(ParseError);
+  void error(Token token, std::string message);
 
   Token peek(size_t offset = 0);
   Token advance();
@@ -67,8 +70,8 @@ private:
 };
 
 struct ParseError : public std::exception {
-public:
+ public:
   std::string message;
   ParseError(std::string message) : message(message) {}
 };
-} // namespace ktpp::parser
+}  // namespace ktpp::parser

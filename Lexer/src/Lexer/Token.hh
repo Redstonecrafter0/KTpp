@@ -100,10 +100,10 @@ using TokenKind =
 
 class TextSpan {
  public:
-  const std::string filePath;
-  const size_t line;
-  const size_t start;
-  const size_t end;
+  std::string filePath;
+  size_t line;
+  size_t start;
+  size_t end;
   TextSpan(std::string filePath, int line, int start, int end)
       : filePath(filePath), line(line), start(start), end(end) {}
   size_t length() { return end - start; }

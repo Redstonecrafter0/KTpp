@@ -17,3 +17,4 @@ add_subdirectory(Parser)
 add_executable(ktpp main.cpp)
 
 target_link_libraries(${PROJECT_NAME} Lexer)
+target_link_libraries(${PROJECT_NAME} Parser)
