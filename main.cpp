@@ -1,6 +1,8 @@
-#include "Lexer/Lexer.hh"
 #include <iostream>
 #include <sstream>
+
+#include "Lexer/Lexer.hh"
+#include "Parser/Parser.hh"
 
 int main() {
   while (true) {
@@ -9,12 +11,11 @@ int main() {
     auto logger =
         ktpp::logger::create_logger(&std::cout, ktpp::logger::LogLevel::Info);
 
-    auto lexer = ktpp::lexer::Lexer(logger.get(), "console", source);
-    lexer.lex();
+    auto parser = ktpp::parser::Parser(logger.get(), "console", source);
+    std::vector<std::unique_ptr<ktpp::parser::Stmt>> stmts = parser.parse();
 
-    if (lexer.hadError)
-      continue;
-    for (auto t : lexer.tokens)
-      std::cout << "Lexeme: " << t.lexeme << std::endl;
+    if (parser.hadError) continue;
+    for (auto& stmt : stmts)
+      std::cout << "Statement: " << typeid(stmt).name() << std::endl;
   }
 }

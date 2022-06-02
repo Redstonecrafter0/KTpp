@@ -76,6 +76,7 @@ enum class KeywordKind {
   Break,
   Continue,
   Interface,
+  This,
 };
 enum class LiteralKind { Int, Float, Bool, String, Identifier };
 enum class OtherKind {
@@ -98,7 +99,7 @@ using TokenKind =
     std::variant<OperatorKind, KeywordKind, LiteralKind, OtherKind>;
 
 class TextSpan {
-public:
+ public:
   const std::string filePath;
   const size_t line;
   const size_t start;
@@ -109,7 +110,7 @@ public:
 };
 
 class Token {
-public:
+ public:
   TokenKind kind;
   std::string lexeme;
   TextSpan span;
@@ -119,4 +120,4 @@ public:
         std::any literal = nullptr) noexcept
       : kind{kind}, lexeme(lexeme), span(span), literal(literal) {}
 };
-} // namespace ktpp::lexer
+}  // namespace ktpp::lexer

@@ -361,3 +361,7 @@ _deps
 out/
 build/
 .vscode/
+
+.vcxproj
+.sln
+.vcxproj.filters
