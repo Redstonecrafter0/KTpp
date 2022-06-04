@@ -15,7 +15,8 @@ void test_power_zero(std::string str) {
   std::stringstream ss;
   auto logger =
       ktpp::logger::create_logger(&ss, ktpp::logger::LogLevel::Info, false);
-  auto lexer = Lexer(logger.get(), "mockfile", str);
+  auto diagnostics = ktpp::diagnostics::Diagnostics(logger.get());
+  auto lexer = Lexer(&diagnostics, "mockfile", str);
   lexer.lex();
   std::string log = ss.str();
   ASSERT(log.find("with power of 0"));

@@ -10,7 +10,8 @@ int main() {
     getline(std::cin, source);
     auto logger =
         ktpp::logger::create_logger(&std::cout, ktpp::logger::LogLevel::Info);
-    auto lexer = ktpp::lexer::Lexer(logger.get(), "mockfile", source);
+    auto diagnostics = ktpp::diagnostics::Diagnostics(logger.get());
+    auto lexer = ktpp::lexer::Lexer(&diagnostics, "mockfile", source);
     lexer.lex();
     auto parser = ktpp::parser::Parser(logger.get(), "console", lexer.tokens);
     std::vector<std::unique_ptr<ktpp::parser::Stmt>> stmts = parser.parse();

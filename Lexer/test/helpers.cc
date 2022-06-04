@@ -30,7 +30,8 @@ template <typename TestKind>
 std::any test_token(std::string str, TestKind tkind) {
   auto logger =
       ktpp::logger::create_logger(&std::cout, ktpp::logger::LogLevel::Info);
-  auto lexer = Lexer(logger.get(), "mockfile", str);
+  auto diagnostics = ktpp::diagnostics::Diagnostics(logger.get());
+  auto lexer = Lexer(&diagnostics, "mockfile", str);
   lexer.lex();
   ASSERT(!lexer.hadError)
   auto tokens = lexer.tokens;
@@ -44,7 +45,8 @@ std::any test_token(std::string str, TestKind tkind) {
 auto eachToken(std::string code) {
   auto logger =
       ktpp::logger::create_logger(&std::cout, ktpp::logger::LogLevel::Info);
-  auto lexer = Lexer(logger.get(), "mockfile", code);
+  auto diagnostics = ktpp::diagnostics::Diagnostics(logger.get());
+  auto lexer = Lexer(&diagnostics, "mockfile", code);
   lexer.lex();
   ASSERT(!lexer.hadError)
   auto tokens = lexer.tokens;
@@ -52,5 +54,6 @@ auto eachToken(std::string code) {
 }
 
 auto token(TokenKind kind, std::string lexme) {
-  return Token(kind, lexme, TextSpan("mockfile", 0, 0, 0));
+  return Token(kind, lexme,
+               ktpp::diagnostics::TextSpan("mockfile", 0, 0, 0, 0));
 }

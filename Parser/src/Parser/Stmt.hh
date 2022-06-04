@@ -101,11 +101,11 @@ class Continue : public Stmt {
 class Function : public Stmt {
  public:
   Token name;
-  std::optional<GenericParameters> generics;
+  std::unique_ptr<GenericParameters> generics;
   std::vector<Param> params;
   std::optional<Type> type;
   std::unique_ptr<Stmt> body;
-  Function(Token name, std::optional<GenericParameters> generics,
+  Function(Token name, std::unique_ptr<GenericParameters> generics,
            std::vector<Param> params, std::optional<Type> type,
            std::unique_ptr<Stmt> body)
       : name(name),
@@ -119,12 +119,11 @@ class Class : public Stmt {
   Token name;
   std::vector<std::unique_ptr<Var>> fields;
   std::vector<Function> methods;
-  std::optional<GenericParameters> generics;
-  std::optional<std::unique_ptr<Expr>> superclass;
+  std::unique_ptr<GenericParameters> generics;
+  std::unique_ptr<Expr> superclass;
   Class(Token name, std::vector<std::unique_ptr<Var>> fields,
-        std::vector<Function> methods,
-        std::optional<std::unique_ptr<Expr>> superclass,
-        std::optional<GenericParameters> generics)
+        std::vector<Function> methods, std::unique_ptr<Expr> superclass,
+        std::unique_ptr<GenericParameters> generics)
       : name(name),
         fields(std::move(fields)),
         methods(std::move(methods)),

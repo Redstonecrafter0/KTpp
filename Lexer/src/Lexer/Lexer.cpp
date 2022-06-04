@@ -4,8 +4,9 @@
 #include <iostream>
 
 namespace ktpp::lexer {
-Lexer::Lexer(logger::Logger *logger, std::string filePath, std::string source)
-    : logger(logger), filePath(filePath), source(source) {}
+Lexer::Lexer(diagnostics::Diagnostics *diagnostics, std::string filePath,
+             std::string source)
+    : diagnostics(diagnostics), filePath(filePath), source(source) {}
 void Lexer::lex() {
   while (!isAtEnd()) {
     start = current;
@@ -240,19 +241,10 @@ bool Lexer::match(char expected, size_t offset) {
 bool Lexer::isAtEnd() { return current >= source.length(); }
 
 void Lexer::emit(logger::LogLevel level, std::string message) {
-
-  size_t lineLength = current - lineStart;
-  size_t squiggleLength = current - start;
-  std::string squiggles = std::string(squiggleLength, '^');
-  std::string spaces = std::string(lineLength - squiggleLength, ' ');
-  std::string code = source.substr(lineStart, lineLength);
-  std::string position =
-      filePath + ":" + std::to_string(line) + ":" + std::to_string(column);
-  std::string textHighlight = "\n" + spaces + squiggles;
-
-  logger->Log(level, "Lexer",
-              code + textHighlight + "\n" + "[" + position + "] " + message);
+  diagnostics->emit(level, "Lexer", message, span());
 }
 
-TextSpan Lexer::span() { return TextSpan(filePath, line, start, current); };
+diagnostics::TextSpan Lexer::span() {
+  return diagnostics::TextSpan(filePath, line, lineStart, start, current);
+};
 } // namespace ktpp::lexer

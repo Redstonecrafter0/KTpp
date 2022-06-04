@@ -162,12 +162,13 @@ Continue Parser::continueStatement() { return Continue(peek(-1)); }
 
 Class Parser::classDeclaration() {
   Token name = consume(LiteralKind::Identifier, "Expect class name.");
-  std::optional<GenericParameters> generics = std::nullopt;
+  std::unique_ptr<GenericParameters> generics = nullptr;
   if (match(OperatorKind::Less)) {
-    generics = genericParams();
+    auto params = std::make_unique<GenericParameters>(genericParams());
+    generics.swap(params);
   }
 
-  std::optional<std::unique_ptr<Expr>> superclass = std::nullopt;
+  std::unique_ptr<Expr> superclass = nullptr;
   if (match(OtherKind::Colon))
     if (!check(LiteralKind::Identifier))
       error(peek(), "Expect identifier.");
@@ -199,9 +200,10 @@ Return Parser::returnStatement() {
 Function Parser::functionDeclaration() {
   Token name = consume(LiteralKind::Identifier, "Expect identifier.");
 
-  std::optional<GenericParameters> generics = std::nullopt;
+  std::unique_ptr<GenericParameters> generics = nullptr;
   if (match(OperatorKind::Less)) {
-    generics = genericParams();
+    auto params = std::make_unique<GenericParameters>(genericParams());
+    generics.swap(params);
   }
 
   std::vector<Param> params;
@@ -299,8 +301,7 @@ std::unique_ptr<Expr> Parser::expression() {
                                                   : (Expr)variable(t)));
   if (match({LiteralKind::Float, LiteralKind::Int, LiteralKind::String,
              KeywordKind::True, KeywordKind::False}))
-    if (match({OperatorKind::Bang, OperatorKind::Minus, OperatorKind::Inv}))
-      return checkExtension(std::make_unique<Literal>(literal(t)));
+    return checkExtension(std::make_unique<Literal>(literal(t)));
 
   error(t, "Expect expression.");
 }
@@ -423,9 +424,10 @@ Type Parser::type() {
 
 Lambda Parser::lambda() {
   Token kw = peek(-1);
-  std::optional<GenericParameters> generics = std::nullopt;
+  std::unique_ptr<GenericParameters> generics = nullptr;
   if (match(OperatorKind::Less)) {
-    generics = genericParams();
+    auto params = std::make_unique<GenericParameters>(genericParams());
+    generics.swap(params);
   }
 
   std::vector<Param> params;

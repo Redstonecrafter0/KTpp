@@ -32,7 +32,7 @@ public:
   LogWriter(std::ostream *ostream, LogLevel min_level, bool colors)
       : ostream(ostream), min_level(min_level), colors(colors) {}
 
-  void Log(LogLevel level, const std::string &message,
+  void log(LogLevel level, const std::string &message,
            size_t line_offset) override {
     if (level < min_level)
       return;
@@ -66,11 +66,11 @@ public:
     }
   }
 
-  void Log(LogLevel level, const std::string &source,
+  void log(LogLevel level, const std::string &source,
            const std::string &message, size_t line_offset) override {
     if (level < min_level)
       return;
-    Log(level, source + ": " + message, line_offset + source.length() + 2);
+    log(level, source + ": " + message, line_offset + source.length() + 2);
   }
 
   ~LogWriter() override { ostream->flush(); }
@@ -82,17 +82,17 @@ private:
 
 public:
   CombinedLogger(std::vector<Logger *> loggers) : loggers(loggers) {}
-  void Log(LogLevel level, const std::string &message,
+  void log(LogLevel level, const std::string &message,
            size_t line_offset) override {
     for (auto &logger : loggers) {
-      logger->Log(level, message, line_offset);
+      logger->log(level, message, line_offset);
     }
   }
 
-  void Log(LogLevel level, const std::string &source,
+  void log(LogLevel level, const std::string &source,
            const std::string &message, size_t line_offset) override {
     for (auto &logger : loggers) {
-      logger->Log(level, source, message, line_offset);
+      logger->log(level, source, message, line_offset);
     }
   }
 
@@ -112,14 +112,14 @@ public:
   PrefixedLogger(std::unique_ptr<Logger> logger, std::string prefix)
       : logger(std::move(logger)), prefix(prefix) {}
 
-  void Log(LogLevel level, const std::string &message,
+  void log(LogLevel level, const std::string &message,
            size_t line_offset) override {
-    logger->Log(level, prefix, message, line_offset);
+    logger->log(level, prefix, message, line_offset);
   }
 
-  void Log(LogLevel level, const std::string &source,
+  void log(LogLevel level, const std::string &source,
            const std::string &message, size_t line_offset) override {
-    logger->Log(level, prefix + "." + source, message, line_offset);
+    logger->log(level, prefix + "." + source, message, line_offset);
   }
 };
 

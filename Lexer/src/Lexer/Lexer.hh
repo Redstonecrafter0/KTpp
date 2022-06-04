@@ -1,22 +1,23 @@
 #pragma once
-#include "Logger/Logger.hh"
 #include <map>
 #include <optional>
 #include <vector>
 
+#include "Diagnostics/Diagnostics.hh"
 #include "Token.hh"
 
 namespace ktpp::lexer {
 class Lexer {
-public:
+ public:
   bool hadError = false;
   std::vector<Token> tokens;
-  Lexer(logger::Logger *logger, std::string filePath, std::string source);
+  Lexer(diagnostics::Diagnostics *diagnostics, std::string filePath,
+        std::string source);
   void lex();
   void tokenize();
 
-private:
-  logger::Logger *logger;
+ private:
+  diagnostics::Diagnostics *diagnostics;
   std::string filePath;
   std::string source;
 
@@ -76,7 +77,7 @@ private:
   Token number();
   Token string();
   Token identifier();
-  TextSpan span();
+  diagnostics::TextSpan span();
   std::optional<Token> otherToken();
 
   char peek(size_t offset = 0);
@@ -86,4 +87,4 @@ private:
   bool isAtEnd();
   void emit(logger::LogLevel, std::string);
 };
-} // namespace ktpp::lexer
+}  // namespace ktpp::lexer

@@ -153,11 +153,11 @@ class IndexSignature : public Expr {
 class Lambda : public Expr {
  public:
   Token keyword;
-  std::optional<GenericParameters> generics;
+  std::unique_ptr<GenericParameters> generics;
   std::vector<Param> params;
   std::unique_ptr<Expr> expr;
   std::optional<std::unique_ptr<Type>> type;
-  Lambda(Token keyword, std::optional<GenericParameters> generics,
+  Lambda(Token keyword, std::unique_ptr<GenericParameters> generics,
          std::vector<Param> params, std::optional<std::unique_ptr<Type>> type,
          std::unique_ptr<Expr> expr)
       : keyword(keyword),

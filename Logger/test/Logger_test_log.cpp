@@ -14,16 +14,16 @@ int main() {
       ktpp::logger::combine_loggers(std::vector<ktpp::logger::Logger *>{
           logger1.release(), logger3.release()});
 
-  combined->Log(ktpp::logger::LogLevel::Debug, "Debug message");
-  combined->Log(ktpp::logger::LogLevel::Info, "Info message");
-  combined->Log(ktpp::logger::LogLevel::Warn, "Warn message");
-  combined->Log(ktpp::logger::LogLevel::Error, "Error message");
-  combined->Log(ktpp::logger::LogLevel::Severe, "Severe message");
-  combined->Log(ktpp::logger::LogLevel::Info, "Test", "Info message");
-  combined->Log(ktpp::logger::LogLevel::Warn, "Test", "Warn message");
-  combined->Log(ktpp::logger::LogLevel::Error, "Test", "Error message");
-  combined->Log(ktpp::logger::LogLevel::Severe, "Test", "Severe message");
-  combined->Log(ktpp::logger::LogLevel::Debug, "Test", "Hello\nworld\n!");
+  combined->log(ktpp::logger::LogLevel::Debug, "Debug message");
+  combined->log(ktpp::logger::LogLevel::Info, "Info message");
+  combined->log(ktpp::logger::LogLevel::Warn, "Warn message");
+  combined->log(ktpp::logger::LogLevel::Error, "Error message");
+  combined->log(ktpp::logger::LogLevel::Severe, "Severe message");
+  combined->log(ktpp::logger::LogLevel::Info, "Test", "Info message");
+  combined->log(ktpp::logger::LogLevel::Warn, "Test", "Warn message");
+  combined->log(ktpp::logger::LogLevel::Error, "Test", "Error message");
+  combined->log(ktpp::logger::LogLevel::Severe, "Test", "Severe message");
+  combined->log(ktpp::logger::LogLevel::Debug, "Test", "Hello\nworld\n!");
 
   std::cout << ss1.str() << std::endl;
   std::cout << ss2.str() << std::endl;

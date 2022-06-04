@@ -3,6 +3,8 @@
 #include <string>
 #include <variant>
 
+#include "Diagnostics/Diagnostics.hh"
+
 namespace ktpp::lexer {
 enum class OperatorKind {
   // Arithmetic
@@ -98,25 +100,14 @@ enum class OtherKind {
 using TokenKind =
     std::variant<OperatorKind, KeywordKind, LiteralKind, OtherKind>;
 
-class TextSpan {
- public:
-  std::string filePath;
-  size_t line;
-  size_t start;
-  size_t end;
-  TextSpan(std::string filePath, int line, int start, int end)
-      : filePath(filePath), line(line), start(start), end(end) {}
-  size_t length() { return end - start; }
-};
-
 class Token {
  public:
   TokenKind kind;
   std::string lexeme;
-  TextSpan span;
+  diagnostics::TextSpan span;
   std::any literal;
 
-  Token(TokenKind kind, std::string lexeme, TextSpan span,
+  Token(TokenKind kind, std::string lexeme, diagnostics::TextSpan span,
         std::any literal = nullptr) noexcept
       : kind{kind}, lexeme(lexeme), span(span), literal(literal) {}
 };
