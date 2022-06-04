@@ -60,7 +60,7 @@ class Parser {
   void synchronize();
   void error(Token token, std::string message);
 
-  Token peek(size_t offset = 0);
+  Token peek(int64_t offset = 0);
   Token advance();
   Token consume(TokenKind type, std::string message);
   bool isAtEnd();

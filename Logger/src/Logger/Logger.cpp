@@ -17,6 +17,8 @@ std::string log_level_color(LogLevel level) {
     return "\033[1m\033[31m";
   case LogLevel::Severe:
     return "\033[1m\033[35m";
+  default:
+    return "";
   }
 }
 
@@ -44,7 +46,7 @@ public:
       std::stringstream header;
       header << "[" << level << "] ";
       logOutput << header.str();
-      int header_length = header.str().length() + line_offset;
+      size_t header_length = header.str().length() + line_offset;
       std::string messages = message;
       std::string spaces = std::string(header_length, ' ');
       size_t pos = 0;
@@ -135,6 +137,8 @@ std::ostream &operator<<(std::ostream &os, const LogLevel &level) {
     return os << "Error ";
   case LogLevel::Severe:
     return os << "Severe";
+  default:
+    return os << "Unknown";
   }
 };
 

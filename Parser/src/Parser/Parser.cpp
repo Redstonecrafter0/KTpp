@@ -6,24 +6,44 @@ inline bool instanceof (const T) {
 }
 
 namespace ktpp::parser {
-bool isStrictlyUnop(OperatorKind kind) { return kind == OperatorKind::Bang; }
 
-bool isAssignment(OperatorKind kind) {
-  return kind == OperatorKind::Equals || kind == OperatorKind::PlusEq ||
-         kind == OperatorKind::MinusEq || kind == OperatorKind::StarEq ||
-         kind == OperatorKind::SlashEq || kind == OperatorKind::ModEq ||
-         kind == OperatorKind::AndEq || kind == OperatorKind::OrEq ||
-         kind == OperatorKind::PowerEq;
+template <typename T>
+std::pair<bool, T> isTokenKind(const TokenKind &token) {
+  if (std::holds_alternative<T>(token)) {
+    return std::make_pair(true, std::get<T>(token));
+  }
+  return std::make_pair(false, T());
 }
 
-bool isOperational(OperatorKind kind) {
-  return (OtherKind &)kind == OtherKind::Question_Mark ||
-         (OtherKind &)kind == OtherKind::Colon ||
-         (OtherKind &)kind == OtherKind::Arrow;
+bool isStrictlyUnop(TokenKind kind) {
+  auto [isUnop, unop] = isTokenKind<OperatorKind>(kind);
+  return isUnop && (unop == OperatorKind::Bang || unop == OperatorKind::Inv);
 }
 
-bool isBinop(OperatorKind kind) {
-  return !(isStrictlyUnop(kind) || isAssignment(kind) || isOperational(kind));
+bool isAssignment(TokenKind kind) {
+  auto [isAssign, assign] = isTokenKind<OperatorKind>(kind);
+  return isAssign &&
+         (assign == OperatorKind::Equals || assign == OperatorKind::PlusEq ||
+          assign == OperatorKind::MinusEq || assign == OperatorKind::StarEq ||
+          assign == OperatorKind::SlashEq || assign == OperatorKind::ModEq ||
+          assign == OperatorKind::AndEq || assign == OperatorKind::OrEq ||
+          assign == OperatorKind::PowerEq);
+}
+
+bool isOperational(TokenKind kind) {
+  auto [isOp, op] = isTokenKind<OtherKind>(kind);
+  return isOp && (op == OtherKind::Question_Mark || op == OtherKind::Colon ||
+                  op == OtherKind::Arrow);
+}
+
+bool isEof(TokenKind kind) {
+  auto [isEof, eof] = isTokenKind<OtherKind>(kind);
+  return isEof && eof == OtherKind::Eof;
+}
+
+bool isBinop(TokenKind kind) {
+  return !(isEof(kind) || isStrictlyUnop(kind) || isAssignment(kind) ||
+           isOperational(kind));
 }
 
 Parser::Parser(ktpp::logger::Logger *logger, std::string filePath,
@@ -264,17 +284,17 @@ std::optional<std::unique_ptr<Expr>> Parser::canExpression() {
 
 std::unique_ptr<Expr> Parser::checkExtension(std::unique_ptr<Expr> first) {
   Token t = peek();
-  if (isBinop((OperatorKind &)t.kind))
+  if (isBinop(t.kind))
     return checkExtension(
         std::make_unique<Binary>(binary(std::move(first), t)));
   if (match(OtherKind::Dot)) {
     Token member = consume(LiteralKind::Identifier, "Expect member name.");
     return checkExtension(
-        isAssignment((OperatorKind &)peek().kind)
+        isAssignment(peek().kind)
             ? std::make_unique<Expr>(set(std::move(first), member))
             : std::make_unique<Expr>(get(std::move(first), member)));
   }
-  if (isBinop((OperatorKind &)t.kind))
+  if (isBinop(t.kind))
     return checkExtension(
         std::make_unique<Binary>(binary(expression(), advance())));
   if (match(OtherKind::Question_Mark))
@@ -297,8 +317,7 @@ std::unique_ptr<Expr> Parser::expression() {
     return checkExtension(std::make_unique<Array>(array(t)));
   if (match(LiteralKind::Identifier))
     return checkExtension(std::make_unique<Expr>(
-        isAssignment((OperatorKind &)peek().kind) ? (Expr)assign(t)
-                                                  : (Expr)variable(t)));
+        isAssignment(peek().kind) ? (Expr)assign(t) : (Expr)variable(t)));
   if (match({LiteralKind::Float, LiteralKind::Int, LiteralKind::String,
              KeywordKind::True, KeywordKind::False}))
     return checkExtension(std::make_unique<Literal>(literal(t)));
@@ -307,11 +326,17 @@ std::unique_ptr<Expr> Parser::expression() {
 }
 
 Literal Parser::literal(Token t) {
-  if ((KeywordKind &)t.kind == KeywordKind::False) return Literal(false);
-  if ((KeywordKind &)t.kind == KeywordKind::True) return Literal(true);
-  if ((LiteralKind &)t.kind == LiteralKind::String) return Literal(t.literal);
-  if ((LiteralKind &)t.kind == LiteralKind::Int) return Literal(t.literal);
-  if ((LiteralKind &)t.kind == LiteralKind::Float) return Literal(t.literal);
+  auto [isLiteral, kind] = isTokenKind<LiteralKind>(t.kind);
+  auto [isKeyword, keyword] = isTokenKind<KeywordKind>(t.kind);
+  if (isKeyword) {
+    if (keyword == KeywordKind::False) return Literal(false);
+    if (keyword == KeywordKind::True) return Literal(true);
+  } else if (isLiteral) {
+    if (kind == LiteralKind::String) return Literal(t.literal);
+    if (kind == LiteralKind::Int) return Literal(t.literal);
+    if (kind == LiteralKind::Float) return Literal(t.literal);
+  }
+  error(t, "Expect literal.");
 }
 
 Binary Parser::binary(std::unique_ptr<Expr> left, Token op) {
@@ -504,5 +529,7 @@ Token Parser::advance() {
   return tokens[current - 1];
 }
 
-Token Parser::peek(size_t offset) { return tokens[current + offset]; }
+Token Parser::peek(int64_t offset) {
+  return tokens[(size_t)((uint64_t)current + offset)];
+}
 }  // namespace ktpp::parser

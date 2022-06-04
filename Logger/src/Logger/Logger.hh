@@ -9,9 +9,9 @@ enum LogLevel { Debug, Info, Warn, Error, Severe };
 class Logger {
 public:
  virtual void log(LogLevel level, const std::string &message,
-                  size_t line_offset = 0){};
+                  size_t line_offset = 0) = 0;
  virtual void log(LogLevel level, const std::string &source,
-                  const std::string &message, size_t line_offset = 0){};
+                  const std::string &message, size_t line_offset = 0) = 0;
  virtual ~Logger() = default;
 };
 
