@@ -89,19 +89,34 @@ Explicit type:
 var x: Type = <expr>
 Mutable declaration:
 var mut x = <expr>
+Constant decleration:
+val x = <expr>
 
 General:
+Var:
 var [mut] <id>[: Type] = <expr>
+Val:
+val <id>[: Type] = <expr>
 
 ```
 
-## Generic arguments (generics)
+## Generic parameter (genericparam)
 
 ```
 
 Not valid standing alone
 General:
-['<'[<id>[: Type],]...'>']
+['<'[<id>[: <typespec>],]...'>']
+
+```
+
+## Generic arguments (genericargs)
+
+```
+
+Not valid standing alone
+General:
+['<'[<typespec>,]...'>']
 
 ```
 
@@ -142,7 +157,7 @@ With generics:
 fn a<K : Type, V> <stmt>
 
 General:
-fn identifier <generics> [<params typed>] [-> Type] <stmt>
+fn identifier <genericparams> [<params typed>] [-> Type] <stmt>
 
 ```
 
@@ -158,7 +173,7 @@ Usage:
 fn a(b: fn <T>(T, int) -> int) -> FuncType
 
 General:
-fn <generics> [([Type]...)] [-> Type]
+fn <genericparams> [([Type]...)] [-> Type]
 
 ```
 
@@ -173,7 +188,7 @@ var a = fn (b: fn(int, int) -> int) b(1, 2)
 a(fn (a, b) a + b)
 
 General:
-fn <generics> [<params untyped>] [-> Type] <stmt>
+fn <genericparams> [<params untyped>] [-> Type] <stmt>
 
 ```
 
@@ -215,7 +230,7 @@ class Identifier : Superclass {
 
 General:
 
-class Identifier <generics> [: Superclass] {
+class Identifier <genericparams> [: Superclass] {
   [[pub] <id>[: Type] [= <expr>]]...
 
   [init[<params typed>] {
@@ -251,7 +266,7 @@ interface Identifier<K : Type, V> : Superinterface {
 General:
 
 interface Identifier['<'[<id>[: Type]]...'>'] [: Supertype [, Supertype]...] {
-  [fn <id> [<generics>] [<params typed>] [-> Type]]...
+  [fn <id> [<genericparams>] [<params typed>] [-> Type]]...
 }
 
 ```
@@ -264,7 +279,7 @@ Usage:
 function<Type, Type>(arg1, arg2)
 
 General:
-identifier['<'[Type]...'>']([<expr>]...)
+<expr>[<genericargs>]([<expr>]...)
 
 ```
 
@@ -411,13 +426,12 @@ Usage:
 
 General:
 
-  
   -
   | ~
   | !
   | (Type)
   <expr>
-| 
+|
   <expr>
   '[' <expr> ']'
   | ++
@@ -452,7 +466,19 @@ General:
 
 ```
 
-## Type alias (type)
+## Typespec (type)
+
+```
+
+Only top level may be declared mutable.
+No generic can be declared mutable.
+
+General:
+[&][mut] <id><genericargs>
+
+```
+
+## Type alias (alias)
 
 ```
 
@@ -460,7 +486,7 @@ Usage:
 type Z = X<A>
 
 General:
-type <id>[<generics>] = <expr>
+type <id>[<genericparams>] = <typespec>
 
 ```
 
@@ -531,7 +557,7 @@ General:
 switch <expr> {
   [case <expr>: <stmt>]...
   [default: <stmt>]
-} 
+}
 |
 switch <expr> {
   [<expr> -> <stmt>]...
@@ -540,14 +566,56 @@ switch <expr> {
 
 ```
 
-# Methods
+## File layout
 
-## With mut
+```
+
+Every file generally follows this layout:
+
+package <id>[.<id>]...
+
+[import <id>[.<id>]...]...
+
+[<class> | <func> | <decl val>]...
+
+```
+
+# Behaviour
+## Methods
+
+### With mut
 
 A method with `mut` is only callable by variables of type `mut Type`.
 If a method is declared as `mut`, `this` and all members are mutable.
 
-# Pub
+## Pub
 
 Any Type, Interface, Global, Class, Method, Member and Function may be exposed with
 `pub` and is from then on reachable from everywhere. Otherwise everything is package private.
+
+## Typing
+
+### Ownership
+
+Values assigned to a variable are owned by the variable.
+This is also valid for array indecies and members.
+
+### Mutability
+
+Only class member or array indecies of a mutable value may be reassigned.
+Immutable local variables may be reassigned because the value is Immutable and not the variable.
+Therefore mutabilty is part of the typespec.
+
+### Reference
+
+Types defined with a leading `&` are references to values.
+Values may be passed by reference to functions.
+References may be assigned to locals.
+Ownership cannot be taken of references.
+
+### Var vs Val
+
+Locals declared with var are variables which may be redefined.
+Variables may be mutable.
+Locals or Globals defined with val are values which may not be redefined.
+Values are immutable.
